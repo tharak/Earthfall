@@ -2,6 +2,8 @@
 
 A geometry-first extraction-shooter prototype set in recognizable urban zones. Choose a weapon and cosmetic suit finish, deploy into real-data abstractions of Praça da Sé or Shibuya Crossing, destroy alien machines, collect unsecured salvage, and reach extraction to bank it.
 
+The street network is dressed deterministically with abandoned vehicles, barricades, cargo, rubble, and lamps. Major props provide physical combat cover while deployment and landmark areas remain navigable.
+
 This is an original-IP project. It does not include Gantz characters, terminology, designs, story text, or assets.
 
 ## Play locally
