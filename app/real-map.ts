@@ -66,7 +66,7 @@ function createRoads() {
   geometry.computeVertexNormals();
   const mesh = new THREE.Mesh(
     geometry,
-    new THREE.MeshStandardMaterial({ color: 0x101719, roughness: 0.97, metalness: 0.02 }),
+    new THREE.MeshStandardMaterial({ color: 0x4f5759, roughness: 0.97, metalness: 0.02 }),
   );
   mesh.receiveShadow = true;
   return mesh;
@@ -89,7 +89,7 @@ function createBuildings() {
     const height = Math.max(0.35, building.height * MAP_METERS_TO_WORLD * 0.72);
     const contour = points.map(([x, z]) => new THREE.Vector2(x, z));
     const triangles = THREE.ShapeUtils.triangulateShape(contour, []);
-    baseColor.setHex(landmark ? 0x8b8273 : building.id % 3 === 0 ? 0x202c30 : building.id % 3 === 1 ? 0x182428 : 0x263237);
+    baseColor.setHex(landmark ? 0xc5ad83 : building.id % 3 === 0 ? 0x879598 : building.id % 3 === 1 ? 0x718185 : 0x9ba5a3);
 
     for (const triangle of triangles) {
       const a = points[triangle[0]];
@@ -104,7 +104,7 @@ function createBuildings() {
       const b = points[(index + 1) % points.length];
       pushTriangle(positions, [a[0], 0, a[1]], [b[0], 0, b[1]], [b[0], height, b[1]]);
       pushTriangle(positions, [a[0], 0, a[1]], [b[0], height, b[1]], [a[0], height, a[1]]);
-      const sideColor = baseColor.clone().multiplyScalar(0.72);
+      const sideColor = baseColor.clone().multiplyScalar(0.8);
       addVertexColor(sideColor, 6);
     }
 
@@ -141,7 +141,7 @@ function createLandmarkBeacon() {
   );
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.08;
-  const spireMaterial = new THREE.MeshStandardMaterial({ color: 0x948a78, emissive: 0x17363b, emissiveIntensity: 0.55, roughness: 0.72 });
+  const spireMaterial = new THREE.MeshStandardMaterial({ color: 0xd0b98d, emissive: 0x17363b, emissiveIntensity: 0.12, roughness: 0.72 });
   const northSpire = new THREE.Mesh(new THREE.ConeGeometry(0.42, 3.2, 8), spireMaterial);
   const southSpire = northSpire.clone();
   northSpire.position.set(-1.9, 8.15, 0.7);
@@ -154,7 +154,7 @@ export function createRealMap() {
   const group = new THREE.Group();
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(MAP_WORLD_SIZE, MAP_WORLD_SIZE),
-    new THREE.MeshStandardMaterial({ color: 0x182124, roughness: 0.94, metalness: 0.04 }),
+    new THREE.MeshStandardMaterial({ color: 0x77877d, roughness: 0.94, metalness: 0.04 }),
   );
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;

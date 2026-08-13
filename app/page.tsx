@@ -9,6 +9,7 @@ import {
   type TouchInput,
   type WeaponId,
 } from "./game-engine";
+import { MiniMap } from "./mini-map";
 
 type Screen = "command" | "mission" | "debrief";
 
@@ -94,6 +95,12 @@ const EMPTY_HUD: MissionHud = {
   extractionProgress: 0,
   reloading: false,
   message: "",
+  tacticalMap: {
+    player: { x: 0, z: 10, heading: 0 },
+    enemies: [],
+    pickups: [],
+    extraction: { x: -12, z: 9, unlocked: false },
+  },
 };
 
 function formatTime(seconds: number) {
@@ -195,6 +202,8 @@ function MissionStage({
         <strong>◈ {hud.salvage}</strong>
         <small>LOST ON FAILURE</small>
       </aside>
+
+      <MiniMap state={hud.tacticalMap} />
 
       <a className="map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
         MAP DATA © OPENSTREETMAP CONTRIBUTORS · ODBL

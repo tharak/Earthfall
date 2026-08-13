@@ -15,6 +15,7 @@ Loadout → city selection → mission deployment → destroy eight robots → c
 - `npm run build:pages` — passed (2026-08-13); static bundle uses relative asset paths.
 - `tests/map-data.test.mjs` verifies the 1,024 m extent, source/license metadata, landmark footprint, and minimum building/road coverage.
 - Chromium/WebGL render inspected at 1280 × 720 (2026-08-13): real downtown footprints render in a batched scene, Catedral da Sé is centered and marked by twin spires/ring, HUD remains readable, and no application runtime errors occurred.
+- Daylight/minimap pass inspected in Chromium/WebGL at 1280 × 720 (2026-08-13): clear sky and warm sun expose street geometry; the 400 m tactical map shows real roads/buildings, player heading, enemy types, salvage, landmark, and extraction without overlapping the HUD.
 - Command view, mission selection, loadout changes, and deployment confirmation — inspected in a browser.
 - A local Vite server and Playwright Chromium/WebGL session start successfully; command, deployment, and live mission rendering were inspected.
 - Open the app, play a successful run, and verify credits persist after reload.

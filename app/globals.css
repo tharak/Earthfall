@@ -181,13 +181,13 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .deployment-actions { display: grid; grid-template-columns: 0.45fr 1fr; gap: 10px; }
 .deployment-actions > button:first-child { border: 1px solid var(--line-strong); background: transparent; color: var(--muted); cursor: pointer; }
 
-.mission-shell { width: 100vw; height: 100vh; position: relative; overflow: hidden; background: #05090b; user-select: none; }
+.mission-shell { width: 100vw; height: 100vh; position: relative; overflow: hidden; background: #a8d2df; user-select: none; }
 .mission-unavailable { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at center, rgba(255, 64, 89, 0.1), transparent 38%), #05090b; }
 .mission-unavailable section { width: min(560px, 100%); padding: 38px; border: 1px solid rgba(255, 64, 89, 0.34); background: rgba(8, 15, 18, 0.9); text-align: center; }
 .mission-unavailable h1 { margin: 12px 0; font-family: var(--display); font-size: clamp(40px, 7vw, 68px); }
 .mission-unavailable p { margin: 0 auto 24px; color: var(--muted); font-size: 10px; line-height: 1.7; }
 .mission-canvas { width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
-.mission-vignette { position: absolute; inset: 0; pointer-events: none; box-shadow: 0 0 150px 36px rgba(0, 0, 0, 0.75) inset; background: linear-gradient(0deg, rgba(2, 5, 7, 0.5), transparent 25%, transparent 72%, rgba(2, 5, 7, 0.55)), repeating-linear-gradient(0deg, transparent 0 4px, rgba(134, 226, 234, 0.025) 5px); }
+.mission-vignette { position: absolute; inset: 0; pointer-events: none; box-shadow: 0 0 80px 12px rgba(2, 12, 16, 0.24) inset; background: linear-gradient(0deg, rgba(6, 16, 18, 0.2), transparent 23%, transparent 80%, rgba(238, 249, 250, 0.08)), repeating-linear-gradient(0deg, transparent 0 4px, rgba(20, 74, 82, 0.022) 5px); }
 .mission-topbar { position: absolute; left: 24px; right: 24px; top: 20px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; pointer-events: none; }
 .mission-location,
 .mission-clock { display: flex; flex-direction: column; gap: 4px; }
@@ -228,7 +228,28 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .salvage-panel { right: 24px; top: 88px; text-align: right; }
 .salvage-panel strong { display: block; margin: 3px 0; color: var(--green); font-family: var(--display); font-size: 24px; }
 .salvage-panel small { color: var(--red); font-size: 6px; letter-spacing: 0.11em; }
-.map-attribution { position: absolute; right: 24px; top: 176px; font-size: 6px; letter-spacing: 0.08em; }
+.map-attribution { position: absolute; right: 24px; top: 430px; font-size: 6px; letter-spacing: 0.08em; }
+.mini-map { width: 218px; position: absolute; right: 24px; top: 174px; padding: 9px; border: 1px solid rgba(108, 211, 223, 0.42); background: rgba(4, 13, 15, 0.88); box-shadow: 0 12px 36px rgba(0, 0, 0, 0.24); backdrop-filter: blur(8px); pointer-events: none; }
+.mini-map header,
+.mini-map footer { display: flex; align-items: center; justify-content: space-between; color: #789497; font-size: 6px; letter-spacing: 0.14em; }
+.mini-map header { padding: 0 2px 7px; }
+.mini-map header b { color: var(--cyan); font-weight: 500; }
+.mini-map footer { padding: 7px 2px 0; }
+.mini-map footer span:last-child { color: #ff6b74; }
+.mini-map svg { width: 100%; display: block; border: 1px solid rgba(115, 198, 207, 0.2); }
+.mini-map-background { fill: #091619; }
+.mini-map-grid { fill: none; stroke: rgba(99, 218, 230, 0.11); stroke-width: 0.45; stroke-dasharray: 2 4; }
+.mini-map-roads { fill: none; stroke: rgba(129, 174, 177, 0.32); stroke-linecap: round; stroke-linejoin: round; }
+.mini-map-buildings { fill: rgba(89, 113, 116, 0.34); stroke: rgba(130, 162, 164, 0.18); stroke-width: 0.25; }
+.mini-map-buildings .landmark { fill: rgba(92, 231, 255, 0.2); stroke: var(--cyan); stroke-width: 0.75; }
+.mini-map-landmark circle { fill: none; stroke: rgba(92, 231, 255, 0.58); stroke-width: 0.75; }
+.mini-map-landmark path { fill: rgba(92, 231, 255, 0.7); }
+.mini-map-contacts .enemy { fill: #ff4f5d; stroke: #ffd0d3; stroke-width: 0.45; }
+.mini-map-contacts .sentry { fill: #ffae46; stroke: #ffe1ad; }
+.mini-map-contacts .pickup { fill: var(--green); stroke: #d7ffeb; stroke-width: 0.4; }
+.mini-map-contacts .extraction { fill: none; stroke: rgba(98, 255, 182, 0.28); stroke-width: 1; stroke-dasharray: 2 2; }
+.mini-map-contacts .extraction.active { stroke: var(--green); filter: drop-shadow(0 0 2px var(--green)); }
+.mini-map-contacts .player { fill: #eaffff; stroke: var(--cyan); stroke-width: 0.7; filter: drop-shadow(0 0 2px var(--cyan)); }
 .extract-meter { width: min(360px, 60vw); position: absolute; left: 50%; bottom: 80px; transform: translateX(-50%); padding: 12px 16px; border: 1px solid rgba(98, 255, 182, 0.34); background: rgba(4, 15, 12, 0.78); text-align: center; pointer-events: none; }
 .extract-meter span { display: block; margin-bottom: 8px; color: var(--green); font-size: 8px; letter-spacing: 0.17em; }
 .extract-meter i { background: var(--green); box-shadow: 0 0 12px rgba(98, 255, 182, 0.5); }
@@ -292,6 +313,10 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
   .mission-location { justify-self: start; padding: 7px 12px; text-align: left; }
   .objective-card { width: 210px; left: 12px; top: 72px; }
   .salvage-panel { top: 72px; right: 12px; }
+  .mini-map { width: 146px; right: 12px; top: 150px; padding: 6px; }
+  .mini-map header,
+  .mini-map footer { font-size: 5px; }
+  .map-attribution { display: none; }
   .health-panel,
   .ammo-panel { bottom: 130px; }
   .health-panel { width: 158px; left: 12px; }

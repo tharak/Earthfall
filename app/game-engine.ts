@@ -16,6 +16,14 @@ export type MissionHud = {
   extractionProgress: number;
   reloading: boolean;
   message: string;
+  tacticalMap: TacticalMapState;
+};
+
+export type TacticalMapState = {
+  player: { x: number; z: number; heading: number };
+  enemies: Array<{ id: number; x: number; z: number; kind: EnemyKind }>;
+  pickups: Array<{ x: number; z: number }>;
+  extraction: { x: number; z: number; unlocked: boolean };
 };
 
 export type MissionResult = {
@@ -194,10 +202,10 @@ export class GameEngine {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 1.12;
 
-    this.scene.background = new THREE.Color(0x05090c);
-    this.scene.fog = new THREE.FogExp2(0x071014, 0.017);
+    this.scene.background = new THREE.Color(0xaed6e5);
+    this.scene.fog = new THREE.FogExp2(0xc1dce3, 0.008);
     this.camera.position.set(0, 27, 32);
     this.camera.lookAt(0, 0, 3);
 
@@ -267,14 +275,14 @@ export class GameEngine {
   }
 
   private buildEnvironment() {
-    const hemi = new THREE.HemisphereLight(0x9ee7ff, 0x17201e, 2.15);
+    const hemi = new THREE.HemisphereLight(0xf1fbff, 0x667064, 2.4);
     this.scene.add(hemi);
 
-    const urbanFill = new THREE.AmbientLight(0x67818a, 0.85);
+    const urbanFill = new THREE.AmbientLight(0xb9d0d6, 1.15);
     this.scene.add(urbanFill);
 
-    const key = new THREE.DirectionalLight(0xc9e8ff, 2.3);
-    key.position.set(-8, 18, 10);
+    const key = new THREE.DirectionalLight(0xfff0d2, 3.2);
+    key.position.set(-18, 32, 14);
     key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024);
     key.shadow.camera.left = -28;
@@ -635,7 +643,7 @@ export class GameEngine {
   }
 
   private updateCamera(dt: number) {
-    const target = new THREE.Vector3(this.player.position.x, 16.5, this.player.position.z + 18);
+    const target = new THREE.Vector3(this.player.position.x, 23, this.player.position.z + 25);
     this.camera.position.lerp(target, 1 - Math.exp(-dt * 7));
     if (this.cameraShake > 0) {
       this.camera.position.x += (Math.random() - 0.5) * this.cameraShake;
@@ -832,6 +840,21 @@ export class GameEngine {
       extractionProgress: this.extractionProgress,
       reloading: this.reloadRemaining > 0,
       message: this.messageTime > 0 ? this.message : "",
+      tacticalMap: {
+        player: { x: this.player.position.x, z: this.player.position.z, heading: this.player.rotation.y },
+        enemies: this.enemies.map((enemy) => ({
+          id: enemy.id,
+          x: enemy.group.position.x,
+          z: enemy.group.position.z,
+          kind: enemy.kind,
+        })),
+        pickups: this.pickups.map((pickup) => ({ x: pickup.mesh.position.x, z: pickup.mesh.position.z })),
+        extraction: {
+          x: this.extraction.position.x,
+          z: this.extraction.position.z,
+          unlocked: this.kills >= REQUIRED_KILLS,
+        },
+      },
     });
   }
 
