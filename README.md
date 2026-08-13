@@ -22,6 +22,7 @@ Open the local address printed by Vite.
 - WASD or arrow keys: move
 - Mouse: aim
 - Hold left mouse or Space: fire
+- Hold right mouse and drag: rotate camera
 - R: reload
 - Hold E inside the green field: extract
 - On narrow screens, use the on-screen direction and action controls

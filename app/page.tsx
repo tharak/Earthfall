@@ -224,7 +224,7 @@ function MissionStage({
         </div>
       )}
 
-      <div className="controls-hint"><kbd>WASD</kbd> MOVE <kbd>MOUSE</kbd> AIM <kbd>LMB</kbd> FIRE <kbd>R</kbd> RELOAD</div>
+      <div className="controls-hint"><kbd>WASD</kbd> MOVE <kbd>MOUSE</kbd> AIM <kbd>LMB</kbd> FIRE <kbd>RMB</kbd> CAMERA <kbd>R</kbd> RELOAD</div>
 
       <div className="touch-controls" aria-label="Touch controls">
         <div className="touch-dpad">

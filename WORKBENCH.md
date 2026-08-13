@@ -18,6 +18,7 @@ Loadout → city selection → mission deployment → destroy eight robots → c
 - Daylight/minimap pass inspected in Chromium/WebGL at 1280 × 720 (2026-08-13): clear sky and warm sun expose street geometry; the 400 m tactical map shows real roads/buildings, player heading, enemy types, salvage, landmark, and extraction without overlapping the HUD.
 - Shibuya Crossing selection, Zone 02 briefing, deployment, live combat scene, scramble markings, Tokyo skyline, and Tokyo-specific minimap inspected in Chromium/WebGL at 1280 × 720 (2026-08-13); no application runtime errors occurred.
 - Deterministic street dressing inspected in both missions at 1280 × 720 (2026-08-13): abandoned vehicles, barricades, crates, rubble, and lamps populate the road geometry; large props provide collision cover while spawn, extraction, and landmark centers remain clear.
+- RMB camera orbit inspected in Chromium at 1280 × 720 (2026-08-13): horizontal and vertical drag rotate/elevate the camera, release returns the mouse to aiming, and no automatic building-avoidance movement remains.
 - Command view, mission selection, loadout changes, and deployment confirmation — inspected in a browser.
 - A local Vite server and Playwright Chromium/WebGL session start successfully; command, deployment, and live mission rendering were inspected.
 - Open the app, play a successful run, and verify credits persist after reload.
@@ -37,7 +38,8 @@ Full successful and failed combat runs still need an independent local playtest.
 - Shibuya map extent: 1,024 × 1,024 m centered on Shibuya Scramble Crossing at `35.6594951, 139.7004982`; extract bounds are south `35.6548957`, west `139.6948374`, north `35.6640945`, east `139.7061590`.
 - The committed Shibuya extract contains 1,828 buildings, 1,487 road ways, and the crossing's 64-point source area. It uses the same ODbL attribution and generator pipeline as São Paulo.
 - Physical scale is one world unit per meter. The player capsule is 1.80 m tall (`0.48 m` radius plus a `0.84 m` straight section); authored mission placements are expanded to preserve the intended 400 m combat footprint.
-- Rendering repair: road faces use upward winding, OSM building heights are tactically compressed while footprints remain meter-accurate, and the camera selects a collision-free street corridor around the player.
+- Rendering repair: road faces use upward winding and OSM building heights are tactically compressed while footprints remain meter-accurate.
+- Camera orbit is player-controlled: hold the right mouse button and drag horizontally. Automatic building-avoidance steering is disabled.
 - Street dressing is generated deterministically from eligible OSM road segments, capped at 280 instanced props per mission with spacing and safe-zone rules.
 - Prototype perspective: elevated third person / isometric to validate the full extraction loop with simple geometry.
 - Paid items remain direct-purchase cosmetic previews; no checkout or random rewards in v0.1.
