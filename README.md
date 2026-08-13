@@ -61,7 +61,8 @@ You can also publish manually by running `npm run build:pages` and uploading the
 ## Prototype architecture
 
 - `app/page.tsx` — command view, loadout, HUD, mission flow, and debrief
-- `app/game-engine.ts` — Three.js scene and deterministic prototype simulation
+- `app/game-engine.ts` — mission-loop orchestrator; input, camera, entities, environment, and street generation live in focused sibling modules
+- `ARCHITECTURE.md` — module boundaries and a “where to make changes” guide
 - `app/globals.css` — interface and responsive presentation
 - `prototype/` — standalone Vite entry for static GitHub Pages export
 

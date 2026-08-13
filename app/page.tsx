@@ -1,14 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  GameEngine,
-  type MissionHud,
-  type MissionResult,
-  type SkinId,
-  type TouchInput,
-  type WeaponId,
-} from "./game-engine";
+import { GameEngine } from "./game-engine";
+import type { MissionHud, MissionResult, SkinId, TouchInput, WeaponId } from "./game-types";
 import { MiniMap } from "./mini-map";
 import { MISSION_MAPS, type MissionMapId } from "./map-content";
 

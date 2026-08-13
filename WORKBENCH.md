@@ -19,6 +19,7 @@ Loadout → city selection → mission deployment → destroy eight robots → c
 - Shibuya Crossing selection, Zone 02 briefing, deployment, live combat scene, scramble markings, Tokyo skyline, and Tokyo-specific minimap inspected in Chromium/WebGL at 1280 × 720 (2026-08-13); no application runtime errors occurred.
 - Deterministic street dressing inspected in both missions at 1280 × 720 (2026-08-13): abandoned vehicles, barricades, crates, rubble, and lamps populate the road geometry; large props provide collision cover while spawn, extraction, and landmark centers remain clear.
 - RMB camera orbit inspected in Chromium at 1280 × 720 (2026-08-13): horizontal and vertical drag rotate/elevate the camera, release returns the mouse to aiming, and no automatic building-avoidance movement remains.
+- Maintainability refactor inspected in Chromium (2026-08-13): the engine orchestrator fell from 1,063 to 572 lines; input, orbit camera, configuration, shared types, enemy policy, entity factories, mission environment, and street props now have focused modules. Movement, firing, orbit, mission failure/debrief, and zero browser errors were verified.
 - Command view, mission selection, loadout changes, and deployment confirmation — inspected in a browser.
 - A local Vite server and Playwright Chromium/WebGL session start successfully; command, deployment, and live mission rendering were inspected.
 - Open the app, play a successful run, and verify credits persist after reload.
