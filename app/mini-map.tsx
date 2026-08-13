@@ -11,7 +11,7 @@ function mapPoint(xMeters: number, zMeters: number) {
 }
 
 function worldPoint(x: number, z: number) {
-  return mapPoint(x * 10, z * 10);
+  return mapPoint(x, z);
 }
 
 function intersectsView(points: Array<[number, number]>) {

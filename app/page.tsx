@@ -102,10 +102,10 @@ const EMPTY_HUD: MissionHud = {
   reloading: false,
   message: "",
   tacticalMap: {
-    player: { x: 0, z: 10, heading: 0 },
+    player: { x: 0, z: 100, heading: 0 },
     enemies: [],
     pickups: [],
-    extraction: { x: -12, z: 9, unlocked: false },
+    extraction: { x: -120, z: 90, unlocked: false },
   },
 };
 

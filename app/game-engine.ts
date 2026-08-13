@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { createRealMap, pointInMapObstacle, type MapPolygonObstacle } from "./real-map";
 import { MISSION_MAPS, type MissionMapId, type RealMapData } from "./map-content";
+import gameScale from "./game-scale.json";
 
 export type WeaponId = "arc" | "pulse";
 export type SkinId = "carbon" | "salvage" | "signal";
@@ -62,6 +63,9 @@ export type EnemyIntent = {
   moveZ: number;
   attack: boolean;
 };
+
+export const PLAYER_HEIGHT_METERS = gameScale.playerHeightMeters;
+const PLAYER_RADIUS_METERS = gameScale.playerRadiusMeters;
 
 export interface EnemyController {
   decide(observation: EnemyObservation): EnemyIntent;
@@ -135,12 +139,14 @@ const SKINS = {
 
 const REQUIRED_KILLS = 8;
 const MISSION_SECONDS = 180;
+const AUTHORED_LAYOUT_SCALE = gameScale.authoredLayoutScale;
+const MISSION_RADIUS_METERS = 185;
 
 export class GameEngine {
   private readonly canvas: HTMLCanvasElement;
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
-  private readonly camera = new THREE.PerspectiveCamera(52, 1, 0.1, 120);
+  private readonly camera = new THREE.PerspectiveCamera(52, 1, 0.1, 600);
   private readonly clock = new THREE.Clock();
   private readonly player = new THREE.Group();
   private readonly playerBody: THREE.Mesh;
@@ -210,15 +216,20 @@ export class GameEngine {
 
     this.scene.background = new THREE.Color(0xaed6e5);
     this.scene.fog = new THREE.FogExp2(0xc1dce3, 0.008);
-    this.camera.position.set(0, 27, 32);
-    this.camera.lookAt(0, 0, 3);
+    this.camera.position.set(0, 23, 125);
+    this.camera.lookAt(0, 0, 98);
 
     const skin = SKINS[skinId];
     this.playerBody = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.48, 0.82, 5, 10),
+      new THREE.CapsuleGeometry(
+        PLAYER_RADIUS_METERS,
+        PLAYER_HEIGHT_METERS - PLAYER_RADIUS_METERS * 2,
+        5,
+        10,
+      ),
       new THREE.MeshStandardMaterial({ color: skin.body, roughness: 0.52, metalness: 0.28 }),
     );
-    this.playerBody.position.y = 1.05;
+    this.playerBody.position.y = 0.9;
     this.playerBody.castShadow = true;
     this.player.add(this.playerBody);
 
@@ -232,7 +243,7 @@ export class GameEngine {
     );
     this.playerAccent.position.set(0, 1.15, -0.5);
     this.player.add(this.playerAccent);
-    this.player.position.set(0, 0, 10);
+    this.player.position.set(0, 0, 10 * AUTHORED_LAYOUT_SCALE);
     this.scene.add(this.player);
 
     this.extractionRing = new THREE.Mesh(
@@ -247,7 +258,7 @@ export class GameEngine {
     );
     this.extractionBeam.position.y = 3.5;
     this.extraction.add(this.extractionRing, this.extractionBeam);
-    this.extraction.position.set(-12, 0, 9);
+    this.extraction.position.set(-12 * AUTHORED_LAYOUT_SCALE, 0, 9 * AUTHORED_LAYOUT_SCALE);
     this.extraction.visible = false;
     this.scene.add(this.extraction);
 
@@ -286,17 +297,18 @@ export class GameEngine {
     this.scene.add(urbanFill);
 
     const key = new THREE.DirectionalLight(0xfff0d2, 3.2);
-    key.position.set(-18, 32, 14);
+    key.position.set(-80, 180, 120);
     key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
-    key.shadow.camera.left = -28;
-    key.shadow.camera.right = 28;
-    key.shadow.camera.top = 28;
-    key.shadow.camera.bottom = -28;
+    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.camera.left = -220;
+    key.shadow.camera.right = 220;
+    key.shadow.camera.top = 220;
+    key.shadow.camera.bottom = -220;
+    key.shadow.camera.far = 500;
     this.scene.add(key);
 
     const redGlow = new THREE.PointLight(0xff3b4e, 20, 28, 2);
-    redGlow.position.set(10, 7, -16);
+    redGlow.position.set(10 * AUTHORED_LAYOUT_SCALE, 7, -16 * AUTHORED_LAYOUT_SCALE);
     this.scene.add(redGlow);
 
     const realMap = createRealMap(this.mapData);
@@ -318,15 +330,17 @@ export class GameEngine {
         new THREE.BoxGeometry(width, 1.4, depth),
         new THREE.MeshStandardMaterial({ color: index % 2 ? 0x364347 : 0x2d383c, roughness: 0.74 }),
       );
-      cover.position.set(x, 0.7, z);
+      const worldX = x * AUTHORED_LAYOUT_SCALE;
+      const worldZ = z * AUTHORED_LAYOUT_SCALE;
+      cover.position.set(worldX, 0.7, worldZ);
       cover.castShadow = true;
       cover.receiveShadow = true;
       this.scene.add(cover);
       this.obstacles.push({
-        minX: x - width / 2 - 0.5,
-        maxX: x + width / 2 + 0.5,
-        minZ: z - depth / 2 - 0.5,
-        maxZ: z + depth / 2 + 0.5,
+        minX: worldX - width / 2 - 0.5,
+        maxX: worldX + width / 2 + 0.5,
+        minZ: worldZ - depth / 2 - 0.5,
+        maxZ: worldZ + depth / 2 + 0.5,
       });
     });
 
@@ -343,7 +357,7 @@ export class GameEngine {
     );
     relayHalo.rotation.x = Math.PI / 2.4;
     relay.add(relayHalo);
-    relay.position.set(10, 13, -18);
+    relay.position.set(10 * AUTHORED_LAYOUT_SCALE, 13, -18 * AUTHORED_LAYOUT_SCALE);
     relay.rotation.y = -0.35;
     this.scene.add(relay);
   }
@@ -362,7 +376,7 @@ export class GameEngine {
       [-16, -2, "hunter"],
     ];
     spawnPoints.forEach(([x, z, kind], index) => {
-      const position = this.findOpenPosition(x, z);
+      const position = this.findOpenPosition(x * AUTHORED_LAYOUT_SCALE, z * AUTHORED_LAYOUT_SCALE);
       this.createEnemy(position.x, position.z, kind, index * 0.61);
     });
   }
@@ -530,8 +544,8 @@ export class GameEngine {
       move.normalize().multiplyScalar(5.3 * dt);
       const previous = this.player.position.clone();
       this.player.position.add(move);
-      this.player.position.x = THREE.MathUtils.clamp(this.player.position.x, -18.5, 18.5);
-      this.player.position.z = THREE.MathUtils.clamp(this.player.position.z, -18.5, 18.5);
+      this.player.position.x = THREE.MathUtils.clamp(this.player.position.x, -MISSION_RADIUS_METERS, MISSION_RADIUS_METERS);
+      this.player.position.z = THREE.MathUtils.clamp(this.player.position.z, -MISSION_RADIUS_METERS, MISSION_RADIUS_METERS);
       if (this.isBlocked(this.player.position.x, this.player.position.z)) this.player.position.copy(previous);
     }
     const dx = this.aimPoint.x - this.player.position.x;
@@ -806,22 +820,22 @@ export class GameEngine {
 
   private findOpenPosition(x: number, z: number) {
     if (!this.isBlocked(x, z)) return new THREE.Vector3(x, 0, z);
-    for (let radius = 1; radius <= 10; radius += 1) {
-      const samples = radius * 10;
+    for (let radius = 2; radius <= 40; radius += 2) {
+      const samples = 32;
       for (let sample = 0; sample < samples; sample += 1) {
         const angle = (sample / samples) * Math.PI * 2;
         const candidateX = x + Math.cos(angle) * radius;
         const candidateZ = z + Math.sin(angle) * radius;
-        if (Math.abs(candidateX) <= 18 && Math.abs(candidateZ) <= 18 && !this.isBlocked(candidateX, candidateZ)) {
+        if (Math.abs(candidateX) <= MISSION_RADIUS_METERS && Math.abs(candidateZ) <= MISSION_RADIUS_METERS && !this.isBlocked(candidateX, candidateZ)) {
           return new THREE.Vector3(candidateX, 0, candidateZ);
         }
       }
     }
-    return new THREE.Vector3(0, 0, 10);
+    return new THREE.Vector3(0, 0, 10 * AUTHORED_LAYOUT_SCALE);
   }
 
   private lineBlocked(start: THREE.Vector3, end: THREE.Vector3) {
-    const steps = Math.ceil(start.distanceTo(end) / 1.2);
+    const steps = Math.ceil(start.distanceTo(end) / 3);
     for (let step = 1; step < steps; step += 1) {
       const ratio = step / steps;
       const x = THREE.MathUtils.lerp(start.x, end.x, ratio);

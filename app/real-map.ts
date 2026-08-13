@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { MapPoint as Point, RealMapData } from "./map-content";
+import gameScale from "./game-scale.json";
 
 export type MapPolygonObstacle = {
   minX: number;
@@ -9,7 +10,8 @@ export type MapPolygonObstacle = {
   points: Point[];
 };
 
-export const MAP_METERS_TO_WORLD = 0.1;
+// One Three.js world unit is one physical meter.
+export const MAP_METERS_TO_WORLD = 1 / gameScale.metersPerWorldUnit;
 
 function pushTriangle(target: number[], a: [number, number, number], b: [number, number, number], c: [number, number, number]) {
   target.push(...a, ...b, ...c);
@@ -96,7 +98,7 @@ function createBuildings(mapData: RealMapData) {
       maxZ: Math.max(...zs),
       points,
     };
-    if (obstacle.maxX > -22 && obstacle.minX < 22 && obstacle.maxZ > -22 && obstacle.minZ < 22) obstacles.push(obstacle);
+    if (obstacle.maxX > -220 && obstacle.minX < 220 && obstacle.maxZ > -220 && obstacle.minZ < 220) obstacles.push(obstacle);
   }
 
   const geometry = new THREE.BufferGeometry();
@@ -128,10 +130,10 @@ function createCrossingMarkings(mapData: RealMapData) {
   const stripeMaterial = new THREE.MeshBasicMaterial({ color: 0xf4f1dc, transparent: true, opacity: 0.78 });
   for (const angle of [0, Math.PI / 2, Math.PI * 0.24, -Math.PI * 0.24]) {
     const stripeGroup = new THREE.Group();
-    for (let stripe = -4; stripe <= 4; stripe += 1) {
-      const marking = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 4.8), stripeMaterial);
+    for (let stripe = -5; stripe <= 5; stripe += 1) {
+      const marking = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 18), stripeMaterial);
       marking.rotation.x = -Math.PI / 2;
-      marking.position.set(stripe * 0.52, 0.075, 0);
+      marking.position.set(stripe * 1.55, 0.075, 0);
       stripeGroup.add(marking);
     }
     stripeGroup.rotation.y = angle;
@@ -151,10 +153,10 @@ function createLandmarkBeacon(mapData: RealMapData) {
   group.add(ring);
   if (mapData.metadata.landmarkKind === "cathedral") {
     const spireMaterial = new THREE.MeshStandardMaterial({ color: 0xd0b98d, emissive: 0x17363b, emissiveIntensity: 0.12, roughness: 0.72 });
-    const northSpire = new THREE.Mesh(new THREE.ConeGeometry(0.42, 3.2, 8), spireMaterial);
+    const northSpire = new THREE.Mesh(new THREE.ConeGeometry(2.2, 16, 8), spireMaterial);
     const southSpire = northSpire.clone();
-    northSpire.position.set(-1.9, 8.15, 0.7);
-    southSpire.position.set(1.9, 8.15, 0.7);
+    northSpire.position.set(-19, 74, 7);
+    southSpire.position.set(19, 74, 7);
     group.add(northSpire, southSpire);
   } else {
     group.add(createCrossingMarkings(mapData));

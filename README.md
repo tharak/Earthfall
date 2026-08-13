@@ -63,3 +63,5 @@ You can also publish manually by running `npm run build:pages` and uploading the
 - `prototype/` — standalone Vite entry for static GitHub Pages export
 
 The current enemies use simple state rules. The GDD defines the boundary for replacing them with trained policies later without coupling learned behavior to rendering or mission UI.
+
+World geometry uses a physical scale of one Three.js unit per meter. The operative is exactly 1.80 m tall.
