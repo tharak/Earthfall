@@ -10,17 +10,17 @@ Loadout → city selection → mission deployment → destroy eight robots → c
 
 ## Validation
 
-- `npm run lint` — passed.
-- `npm test` — passed, including production artifact validation.
-- `npm run build:pages` — passed; static bundle uses relative asset paths.
+- `npm run lint` — passed (2026-08-13).
+- `npm test` — passed (2026-08-13), including the production build, Sites artifact validation, and rendered HTML test.
+- `npm run build:pages` — passed (2026-08-13); static bundle uses relative asset paths.
 - Command view, mission selection, loadout changes, and deployment confirmation — inspected in a browser.
-- The QA browser disables WebGL; the no-WebGL recovery screen was verified. Complete the combat-loop playtest in a WebGL-capable local browser.
+- A local Vite server starts successfully; the available Playwright browser could not start because its Chrome binary is not installed. Complete the combat-loop playtest in a WebGL-capable local browser.
 - Open the app, play a successful run, and verify credits persist after reload.
 - Fail a run and verify unsecured salvage is not banked.
 
 ## Current biggest gap
 
-Full successful and failed combat runs still need an independent local playtest in a WebGL-capable browser.
+Full successful and failed combat runs still need an independent local playtest in a WebGL-capable browser. The production build also now has a checked-in empty `.openai/hosting.json` fallback so the default build does not depend on unavailable site bindings.
 
 ## Decision log
 
