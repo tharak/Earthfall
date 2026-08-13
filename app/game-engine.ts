@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createRealMap, pointInMapObstacle, type MapPolygonObstacle } from "./real-map";
 
 export type WeaponId = "arc" | "pulse";
 export type SkinId = "carbon" | "salvage" | "signal";
@@ -142,6 +143,7 @@ export class GameEngine {
   private readonly pickups: PickupEntity[] = [];
   private readonly timedObjects: TimedObject[] = [];
   private readonly obstacles: BoxObstacle[] = [];
+  private readonly mapObstacles: MapPolygonObstacle[] = [];
   private readonly keys = new Set<string>();
   private readonly touch: TouchInput;
   private readonly weaponId: WeaponId;
@@ -195,9 +197,9 @@ export class GameEngine {
     this.renderer.toneMappingExposure = 1.05;
 
     this.scene.background = new THREE.Color(0x05090c);
-    this.scene.fog = new THREE.FogExp2(0x071014, 0.026);
-    this.camera.position.set(0, 16.5, 28);
-    this.camera.lookAt(0, 0, 8);
+    this.scene.fog = new THREE.FogExp2(0x071014, 0.017);
+    this.camera.position.set(0, 27, 32);
+    this.camera.lookAt(0, 0, 3);
 
     const skin = SKINS[skinId];
     this.playerBody = new THREE.Mesh(
@@ -265,8 +267,11 @@ export class GameEngine {
   }
 
   private buildEnvironment() {
-    const hemi = new THREE.HemisphereLight(0x8fd9ff, 0x101614, 1.35);
+    const hemi = new THREE.HemisphereLight(0x9ee7ff, 0x17201e, 2.15);
     this.scene.add(hemi);
+
+    const urbanFill = new THREE.AmbientLight(0x67818a, 0.85);
+    this.scene.add(urbanFill);
 
     const key = new THREE.DirectionalLight(0xc9e8ff, 2.3);
     key.position.set(-8, 18, 10);
@@ -282,83 +287,11 @@ export class GameEngine {
     redGlow.position.set(10, 7, -16);
     this.scene.add(redGlow);
 
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(58, 58),
-      new THREE.MeshStandardMaterial({ color: 0x192225, roughness: 0.9, metalness: 0.08 }),
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    this.scene.add(ground);
-
-    const road = new THREE.Mesh(
-      new THREE.PlaneGeometry(54, 8),
-      new THREE.MeshStandardMaterial({ color: 0x0d1214, roughness: 0.95 }),
-    );
-    road.rotation.x = -Math.PI / 2;
-    road.position.y = 0.012;
-    this.scene.add(road);
-
-    const roadCross = road.clone();
-    roadCross.rotation.z = Math.PI / 2;
-    this.scene.add(roadCross);
-
-    const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xcdd278, transparent: true, opacity: 0.25 });
-    for (let x = -23; x <= 23; x += 5) {
-      const dash = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.02, 0.08), lineMaterial);
-      dash.position.set(x, 0.04, 0);
-      this.scene.add(dash);
-      const dashZ = dash.clone();
-      dashZ.rotation.y = Math.PI / 2;
-      dashZ.position.set(0, 0.04, x);
-      this.scene.add(dashZ);
-    }
-
-    const buildingPositions = [
-      [-22, -20, 10, 9, 11],
-      [-8, -22, 8, 7, 15],
-      [8, -22, 8, 8, 10],
-      [22, -19, 10, 11, 16],
-      [-22, 20, 11, 9, 14],
-      [-8, 22, 7, 8, 9],
-      [9, 22, 8, 8, 13],
-      [22, 19, 10, 11, 12],
-    ];
-
-    buildingPositions.forEach(([x, z, width, depth, height], index) => {
-      const building = new THREE.Mesh(
-        new THREE.BoxGeometry(width, height, depth),
-        new THREE.MeshStandardMaterial({
-          color: index % 2 ? 0x172126 : 0x202c30,
-          roughness: 0.82,
-          metalness: 0.12,
-        }),
-      );
-      building.position.set(x, height / 2, z);
-      building.castShadow = true;
-      building.receiveShadow = true;
-      this.scene.add(building);
-      this.obstacles.push({
-        minX: x - width / 2 - 0.35,
-        maxX: x + width / 2 + 0.35,
-        minZ: z - depth / 2 - 0.35,
-        maxZ: z + depth / 2 + 0.35,
-      });
-
-      for (let row = 1.5; row < height - 1; row += 2.2) {
-        for (let col = -width / 2 + 1; col < width / 2; col += 2) {
-          const windowMesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.72, 0.58),
-            new THREE.MeshBasicMaterial({
-              color: (index + Math.round(row + col)) % 3 === 0 ? 0xffbd69 : 0x35505a,
-              transparent: true,
-              opacity: 0.42,
-            }),
-          );
-          windowMesh.position.set(x + col, row, z + depth / 2 + 0.01);
-          this.scene.add(windowMesh);
-        }
-      }
-    });
+    const realMap = createRealMap();
+    this.scene.add(realMap.group);
+    this.mapObstacles.push(...realMap.obstacles);
+    this.player.position.copy(this.findOpenPosition(this.player.position.x, this.player.position.z));
+    this.extraction.position.copy(this.findOpenPosition(this.extraction.position.x, this.extraction.position.z));
 
     const coverData = [
       [-7, -5, 4, 1.5],
@@ -416,7 +349,10 @@ export class GameEngine {
       [-15, 8, "hunter"],
       [-16, -2, "hunter"],
     ];
-    spawnPoints.forEach(([x, z, kind], index) => this.createEnemy(x, z, kind, index * 0.61));
+    spawnPoints.forEach(([x, z, kind], index) => {
+      const position = this.findOpenPosition(x, z);
+      this.createEnemy(position.x, position.z, kind, index * 0.61);
+    });
   }
 
   private createEnemy(x: number, z: number, kind: EnemyKind, phase: number) {
@@ -852,7 +788,24 @@ export class GameEngine {
   }
 
   private isBlocked(x: number, z: number) {
-    return this.obstacles.some((obstacle) => x > obstacle.minX && x < obstacle.maxX && z > obstacle.minZ && z < obstacle.maxZ);
+    return this.obstacles.some((obstacle) => x > obstacle.minX && x < obstacle.maxX && z > obstacle.minZ && z < obstacle.maxZ)
+      || this.mapObstacles.some((obstacle) => pointInMapObstacle(x, z, obstacle));
+  }
+
+  private findOpenPosition(x: number, z: number) {
+    if (!this.isBlocked(x, z)) return new THREE.Vector3(x, 0, z);
+    for (let radius = 1; radius <= 10; radius += 1) {
+      const samples = radius * 10;
+      for (let sample = 0; sample < samples; sample += 1) {
+        const angle = (sample / samples) * Math.PI * 2;
+        const candidateX = x + Math.cos(angle) * radius;
+        const candidateZ = z + Math.sin(angle) * radius;
+        if (Math.abs(candidateX) <= 18 && Math.abs(candidateZ) <= 18 && !this.isBlocked(candidateX, candidateZ)) {
+          return new THREE.Vector3(candidateX, 0, candidateZ);
+        }
+      }
+    }
+    return new THREE.Vector3(0, 0, 10);
   }
 
   private lineBlocked(start: THREE.Vector3, end: THREE.Vector3) {

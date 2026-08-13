@@ -30,7 +30,7 @@ const MISSIONS: Mission[] = [
     city: "SÃO PAULO",
     country: "BRAZIL",
     zone: "PRAÇA DA SÉ",
-    coordinates: "23.5505° S / 46.6333° W",
+    coordinates: "23.5513° S / 46.6344° W",
     threat: "LEVEL 03",
     status: "PLAYABLE",
     reward: "280–440 CR",
@@ -195,6 +195,10 @@ function MissionStage({
         <strong>◈ {hud.salvage}</strong>
         <small>LOST ON FAILURE</small>
       </aside>
+
+      <a className="map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+        MAP DATA © OPENSTREETMAP CONTRIBUTORS · ODBL
+      </a>
 
       {hud.extractionUnlocked && (
         <div className="extract-meter" data-active={hud.extractionProgress > 0}>
@@ -365,7 +369,7 @@ export default function Home() {
 
       <footer className="command-footer">
         <span>NETWORK: <b>STABLE</b></span>
-        <span>NO HUMAN CASUALTY DATA · MACHINE TARGETS ONLY</span>
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">MAP DATA © OPENSTREETMAP CONTRIBUTORS · ODBL</a>
         <span>BUILD 0.1.0</span>
       </footer>
 

@@ -135,6 +135,10 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .primary-action span { font-size: 22px; }
 .command-footer { height: 40px; position: absolute; z-index: 5; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; border-top: 1px solid var(--line); background: rgba(3, 8, 10, 0.8); color: #4c6063; font-size: 7px; letter-spacing: 0.13em; }
 .command-footer b { color: var(--green); }
+.command-footer a,
+.map-attribution { color: #61777a; text-decoration: none; }
+.command-footer a:hover,
+.map-attribution:hover { color: var(--cyan); }
 
 .modal-backdrop { position: fixed; z-index: 30; inset: 0; display: grid; place-items: center; padding: 26px; background: rgba(1, 5, 7, 0.82); backdrop-filter: blur(12px); animation: fade-in 180ms ease-out; }
 .loadout-modal,
@@ -224,6 +228,7 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .salvage-panel { right: 24px; top: 88px; text-align: right; }
 .salvage-panel strong { display: block; margin: 3px 0; color: var(--green); font-family: var(--display); font-size: 24px; }
 .salvage-panel small { color: var(--red); font-size: 6px; letter-spacing: 0.11em; }
+.map-attribution { position: absolute; right: 24px; top: 176px; font-size: 6px; letter-spacing: 0.08em; }
 .extract-meter { width: min(360px, 60vw); position: absolute; left: 50%; bottom: 80px; transform: translateX(-50%); padding: 12px 16px; border: 1px solid rgba(98, 255, 182, 0.34); background: rgba(4, 15, 12, 0.78); text-align: center; pointer-events: none; }
 .extract-meter span { display: block; margin-bottom: 8px; color: var(--green); font-size: 8px; letter-spacing: 0.17em; }
 .extract-meter i { background: var(--green); box-shadow: 0 0 12px rgba(98, 255, 182, 0.5); }

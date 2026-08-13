@@ -34,6 +34,14 @@ npm run build:pages
 
 The static GitHub Pages artifact is written to `github-pages/`. Its paths are relative, so it works below a repository subpath.
 
+## Real-world map data
+
+The São Paulo mission uses a committed 1,024 × 1,024 m extract centered on Catedral da Sé. Building footprints and roads come from OpenStreetMap contributors under ODbL 1.0; Google Maps content is not copied or redistributed. To refresh the dataset, export an Overpass JSON response with building and highway ways for the bounds recorded in `WORKBENCH.md`, then run:
+
+```bash
+npm run generate:map -- path/to/overpass.json app/data/praca-da-se-map.json
+```
+
 ## Publish with GitHub Pages
 
 The included `.github/workflows/deploy-pages.yml` builds and publishes the static artifact whenever `main` is updated. In the GitHub repository, open **Settings → Pages** and set the source to **GitHub Actions** once. Push the repository to `main`; the workflow handles later deployments.
@@ -54,4 +62,3 @@ You can also publish manually by running `npm run build:pages` and uploading the
 - `prototype/` — standalone Vite entry for static GitHub Pages export
 
 The current enemies use simple state rules. The GDD defines the boundary for replacing them with trained policies later without coupling learned behavior to rendering or mission UI.
-
