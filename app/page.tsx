@@ -5,6 +5,7 @@ import { GameEngine } from "./game-engine";
 import type { MissionHud, MissionResult, SkinId, TouchInput, WeaponId } from "./game-types";
 import { MiniMap } from "./mini-map";
 import { MISSION_MAPS, type MissionMapId } from "./map-content";
+import { EXTRACTION_POSITIONS } from "./game-config";
 
 type Screen = "command" | "mission" | "debrief";
 
@@ -91,7 +92,7 @@ const EMPTY_HUD: MissionHud = {
   requiredKills: 8,
   salvage: 0,
   timeLeft: 180,
-  extractionUnlocked: false,
+  extractionUnlocked: true,
   extractionProgress: 0,
   reloading: false,
   message: "",
@@ -99,7 +100,7 @@ const EMPTY_HUD: MissionHud = {
     player: { x: 0, z: 100, heading: 0 },
     enemies: [],
     pickups: [],
-    extraction: { x: -120, z: 90, unlocked: false },
+    extractions: EXTRACTION_POSITIONS.map(([x, z]) => ({ x, z })),
   },
 };
 
@@ -179,11 +180,11 @@ function MissionStage({
 
       <aside className="objective-card">
         <span className="eyebrow">PRIMARY DIRECTIVE</span>
-        <strong>{hud.extractionUnlocked ? "REACH EXTRACTION" : "DISMANTLE MACHINES"}</strong>
+        <strong>DISMANTLE OR EXTRACT</strong>
         <div className="objective-progress">
-          <i style={{ width: `${hud.extractionUnlocked ? 100 : (hud.kills / hud.requiredKills) * 100}%` }} />
+          <i style={{ width: `${Math.min(100, (hud.kills / hud.requiredKills) * 100)}%` }} />
         </div>
-        <small>{hud.extractionUnlocked ? "GREEN BEACON · SOUTHWEST" : `${hud.kills} / ${hud.requiredKills} TARGETS`}</small>
+        <small>{hud.kills} / {hud.requiredKills} TARGETS · 4 ACTIVE EXITS</small>
       </aside>
 
       <div className="combat-message" data-visible={Boolean(hud.message)}>{hud.message || "SYSTEM NOMINAL"}</div>

@@ -1,6 +1,6 @@
 # Earthfall Protocol
 
-A geometry-first extraction-shooter prototype set in recognizable urban zones. Choose a weapon and cosmetic suit finish, deploy into real-data abstractions of Praça da Sé or Shibuya Crossing, destroy alien machines, collect unsecured salvage, and reach extraction to bank it.
+A geometry-first extraction-shooter prototype set in recognizable urban zones. Choose a weapon and cosmetic suit finish, deploy into real-data abstractions of Praça da Sé or Shibuya Crossing, fight a continuous stream of alien machines, collect unsecured salvage, and leave through any active extraction field to bank it.
 
 The street network is dressed deterministically with abandoned vehicles, barricades, cargo, rubble, and lamps. Major props provide physical combat cover while deployment and landmark areas remain navigable.
 

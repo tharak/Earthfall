@@ -6,7 +6,7 @@ Prototype v0.1 — real-world Praça da Sé and Shibuya Crossing maps implemente
 
 ## Target flow
 
-Loadout → city selection → mission deployment → destroy eight robots → collect salvage → extract → bank credits → debrief.
+Loadout → city selection → mission deployment → fight and collect salvage for as long as desired → use any active extraction point → bank credits → debrief.
 
 ## Validation
 
@@ -20,6 +20,7 @@ Loadout → city selection → mission deployment → destroy eight robots → c
 - Deterministic street dressing inspected in both missions at 1280 × 720 (2026-08-13): abandoned vehicles, barricades, crates, rubble, and lamps populate the road geometry; large props provide collision cover while spawn, extraction, and landmark centers remain clear.
 - RMB camera orbit inspected in Chromium at 1280 × 720 (2026-08-13): horizontal and vertical drag rotate/elevate the camera, release returns the mouse to aiming, and no automatic building-avoidance movement remains.
 - Maintainability refactor inspected in Chromium (2026-08-13): the engine orchestrator fell from 1,063 to 572 lines; input, orbit camera, configuration, shared types, enemy policy, entity factories, mission environment, and street props now have focused modules. Movement, firing, orbit, mission failure/debrief, and zero browser errors were verified.
+- Continuous-combat pass inspected in Chromium (2026-08-13): enemies steer around local obstacles and converge on the player; four active extraction points render on the minimap from deployment. Each kill schedules a same-kind replacement after 650 ms, and extraction no longer requires objective completion.
 - Command view, mission selection, loadout changes, and deployment confirmation — inspected in a browser.
 - A local Vite server and Playwright Chromium/WebGL session start successfully; command, deployment, and live mission rendering were inspected.
 - Open the app, play a successful run, and verify credits persist after reload.

@@ -63,7 +63,6 @@ const MiniMapBase = memo(function MiniMapBase({ mapData }: { mapData: RealMapDat
 
 export function MiniMap({ state, mapData }: { state: TacticalMapState; mapData: RealMapData }) {
   const [playerX, playerY] = worldPoint(state.player.x, state.player.z);
-  const [extractX, extractY] = worldPoint(state.extraction.x, state.extraction.z);
 
   return (
     <aside className="mini-map" aria-label="Tactical minimap">
@@ -82,7 +81,10 @@ export function MiniMap({ state, mapData }: { state: TacticalMapState; mapData: 
               ? <rect key={enemy.id} className="enemy sentry" x={x - 2.2} y={y - 2.2} width="4.4" height="4.4" />
               : <circle key={enemy.id} className="enemy hunter" cx={x} cy={y} r="2.3" />;
           })}
-          <circle className={state.extraction.unlocked ? "extraction active" : "extraction"} cx={extractX} cy={extractY} r="4.2" />
+          {state.extractions.map((extraction, index) => {
+            const [x, y] = worldPoint(extraction.x, extraction.z);
+            return <circle key={`${extraction.x}-${extraction.z}-${index}`} className="extraction active" cx={x} cy={y} r="4.2" />;
+          })}
           <path
             className="player"
             d="M0-6 4.5 5 0 3-4.5 5Z"

@@ -98,10 +98,10 @@ The first zone is **Praça da Sé, São Paulo, Brazil**, represented as an origi
 Prototype objective sequence:
 
 1. Arrive inside the quarantine perimeter.
-2. Destroy eight invading robots.
-3. Collect the salvage they drop.
-4. Reach the marked extraction field.
-5. Hold the extraction command until transfer completes.
+2. Destroy invading robots while replacements continue entering the zone.
+3. Collect the salvage they drop and decide how long to remain exposed.
+4. Reach any active extraction field at any time.
+5. Hold the extraction command until transfer completes. Destroying eight robots remains the displayed combat objective, but is not required to leave.
 
 ### 4.4 Debrief
 
@@ -316,9 +316,10 @@ The v0.1 prototype is done when:
 4. Both weapons have observably different cadence, magazine, reload, and damage.
 5. The selected skin changes only player presentation.
 6. Desktop controls and basic touch controls complete the full loop.
-7. All game assets are original geometry/code or appropriately licensed.
-8. The site builds with no TypeScript, lint, or production-build errors and the static export works from a nested GitHub Pages path.
-9. No gameplay rule depends on a specific mesh, material name, or current rule-based AI implementation.
+7. Extraction is available from deployment, and destroying an enemy replenishes the active enemy population.
+8. All game assets are original geometry/code or appropriately licensed.
+9. The site builds with no TypeScript, lint, or production-build errors and the static export works from a nested GitHub Pages path.
+10. No gameplay rule depends on a specific mesh, material name, or current rule-based AI implementation.
 
 ## 14. Milestones after v0.1
 

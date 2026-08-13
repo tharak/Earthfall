@@ -18,3 +18,10 @@ export const AUTHORED_LAYOUT_SCALE = gameScale.authoredLayoutScale;
 export const MISSION_RADIUS_METERS = 185;
 export const REQUIRED_KILLS = 8;
 export const MISSION_SECONDS = 180;
+export const ENEMY_RESPAWN_DELAY_MS = 650;
+export const EXTRACTION_POSITIONS = [
+  [-145, 120],
+  [145, 120],
+  [-145, -120],
+  [145, -120],
+] as const;

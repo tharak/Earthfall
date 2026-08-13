@@ -1,7 +1,15 @@
 import * as THREE from "three";
 import { pointInMapObstacle, type MapPolygonObstacle } from "./real-map";
 import { MISSION_MAPS, type MissionMapId, type RealMapData } from "./map-content";
-import { AUTHORED_LAYOUT_SCALE, MISSION_RADIUS_METERS, MISSION_SECONDS, REQUIRED_KILLS, WEAPONS } from "./game-config";
+import {
+  AUTHORED_LAYOUT_SCALE,
+  ENEMY_RESPAWN_DELAY_MS,
+  EXTRACTION_POSITIONS,
+  MISSION_RADIUS_METERS,
+  MISSION_SECONDS,
+  REQUIRED_KILLS,
+  WEAPONS,
+} from "./game-config";
 import { RuleBasedEnemyController } from "./enemy-controller";
 import { createEnemy, createExtractionPoint, createPlayer } from "./entity-factories";
 import { createMissionEnvironment } from "./mission-environment";
@@ -12,6 +20,7 @@ import type {
   EnemyController,
   EnemyEntity,
   EnemyKind,
+  ExtractionEntity,
   MissionHud,
   MissionResult,
   PickupEntity,
@@ -45,10 +54,9 @@ export class GameEngine {
   private readonly weapon: (typeof WEAPONS)[WeaponId];
   private readonly onHud: (hud: MissionHud) => void;
   private readonly onEnd: (result: MissionResult) => void;
-  private readonly extraction: THREE.Group;
+  private readonly extractions: ExtractionEntity[] = [];
   private readonly enemyController: EnemyController = new RuleBasedEnemyController();
-  private readonly extractionRing: THREE.Mesh;
-  private readonly extractionBeam: THREE.Mesh;
+  private readonly respawnTimers: number[] = [];
 
   private animationFrame = 0;
   private ended = false;
@@ -105,12 +113,12 @@ export class GameEngine {
     this.player.position.set(0, 0, 10 * AUTHORED_LAYOUT_SCALE);
     this.scene.add(this.player);
 
-    const extraction = createExtractionPoint();
-    this.extraction = extraction.group;
-    this.extractionRing = extraction.ring;
-    this.extractionBeam = extraction.beam;
-    this.extraction.position.set(-12 * AUTHORED_LAYOUT_SCALE, 0, 9 * AUTHORED_LAYOUT_SCALE);
-    this.scene.add(this.extraction);
+    EXTRACTION_POSITIONS.forEach(([x, z]) => {
+      const extraction = createExtractionPoint();
+      extraction.group.position.set(x, 0, z);
+      this.extractions.push(extraction);
+      this.scene.add(extraction.group);
+    });
 
     this.buildEnvironment();
     this.spawnEnemies();
@@ -121,6 +129,7 @@ export class GameEngine {
 
   destroy() {
     cancelAnimationFrame(this.animationFrame);
+    this.respawnTimers.forEach((timer) => window.clearTimeout(timer));
     window.removeEventListener("resize", this.resize);
     this.input.destroy();
     this.scene.traverse((object) => {
@@ -138,7 +147,9 @@ export class GameEngine {
     this.mapObstacles.push(...environment.mapObstacles);
     this.obstacles.push(...environment.obstacles);
     this.player.position.copy(this.findOpenPosition(this.player.position.x, this.player.position.z));
-    this.extraction.position.copy(this.findOpenPosition(this.extraction.position.x, this.extraction.position.z));
+    this.extractions.forEach((extraction) => {
+      extraction.group.position.copy(this.findOpenPosition(extraction.group.position.x, extraction.group.position.z));
+    });
   }
   private spawnEnemies() {
     const spawnPoints: Array<[number, number, EnemyKind]> = [
@@ -155,10 +166,36 @@ export class GameEngine {
     ];
     spawnPoints.forEach(([x, z, kind], index) => {
       const position = this.findOpenPosition(x * AUTHORED_LAYOUT_SCALE, z * AUTHORED_LAYOUT_SCALE);
-      const enemy = createEnemy(++this.enemyId, position.x, position.z, kind, index * 0.61);
-      this.scene.add(enemy.group);
-      this.enemies.push(enemy);
+      this.addEnemy(position.x, position.z, kind, index * 0.61);
     });
+  }
+
+  private addEnemy(x: number, z: number, kind: EnemyKind, phase: number) {
+    const enemy = createEnemy(++this.enemyId, x, z, kind, phase);
+    this.scene.add(enemy.group);
+    this.enemies.push(enemy);
+  }
+
+  private spawnReplacementEnemy(kind: EnemyKind) {
+    const seedAngle = this.enemyId * 2.399963;
+    for (const radius of [42, 52, 62]) {
+      for (let offset = 0; offset < 16; offset += 1) {
+        const angle = seedAngle + (offset / 16) * Math.PI * 2;
+        const x = this.player.position.x + Math.cos(angle) * radius;
+        const z = this.player.position.z + Math.sin(angle) * radius;
+        if (Math.abs(x) > MISSION_RADIUS_METERS || Math.abs(z) > MISSION_RADIUS_METERS || this.isBlocked(x, z)) continue;
+        if (this.enemies.some((enemy) => Math.hypot(enemy.group.position.x - x, enemy.group.position.z - z) < 6)) continue;
+        this.addEnemy(x, z, kind, seedAngle);
+        this.message = "Replacement signal detected";
+        this.messageTime = 1.2;
+        return;
+      }
+    }
+    const fallback = this.findOpenPosition(
+      THREE.MathUtils.clamp(this.player.position.x + 40, -MISSION_RADIUS_METERS, MISSION_RADIUS_METERS),
+      THREE.MathUtils.clamp(this.player.position.z + 40, -MISSION_RADIUS_METERS, MISSION_RADIUS_METERS),
+    );
+    this.addEnemy(fallback.x, fallback.z, kind, seedAngle);
   }
 
   private resize = () => {
@@ -271,9 +308,7 @@ export class GameEngine {
 
       if (!intent.attack) {
         const direction = new THREE.Vector3(intent.moveX, 0, intent.moveZ);
-        const previous = enemy.group.position.clone();
-        enemy.group.position.addScaledVector(direction, enemy.speed * dt);
-        if (this.isBlocked(enemy.group.position.x, enemy.group.position.z)) enemy.group.position.copy(previous);
+        this.moveEnemyWithAvoidance(enemy, direction, enemy.speed * dt);
       } else if (enemy.cooldown <= 0) {
         this.enemyShoot(enemy);
         enemy.cooldown = enemy.attackDelay;
@@ -281,6 +316,19 @@ export class GameEngine {
 
       enemy.sensor.scale.setScalar(1 + Math.sin(performance.now() * 0.006 + enemy.id) * 0.16);
     });
+  }
+
+  private moveEnemyWithAvoidance(enemy: EnemyEntity, desiredDirection: THREE.Vector3, distance: number) {
+    const steeringAngles = [0, Math.PI / 6, -Math.PI / 6, Math.PI / 3, -Math.PI / 3, Math.PI / 2, -Math.PI / 2];
+    for (const angle of steeringAngles) {
+      const direction = desiredDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+      const nextX = enemy.group.position.x + direction.x * distance;
+      const nextZ = enemy.group.position.z + direction.z * distance;
+      if (this.isBlocked(nextX, nextZ)) continue;
+      enemy.group.position.x = nextX;
+      enemy.group.position.z = nextZ;
+      return;
+    }
   }
 
   private updatePickups(dt: number) {
@@ -328,24 +376,23 @@ export class GameEngine {
   }
 
   private updateExtraction(dt: number) {
-    const unlocked = this.kills >= REQUIRED_KILLS;
-    this.extraction.visible = unlocked;
-    if (!unlocked) return;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    this.extractions.forEach((extraction) => {
+      extraction.ring.rotation.z += dt * 0.4;
+      const beamMaterial = extraction.beam.material as THREE.MeshBasicMaterial;
+      beamMaterial.opacity = 0.055 + Math.sin(performance.now() * 0.003) * 0.018;
+      nearestDistance = Math.min(nearestDistance, this.player.position.distanceTo(extraction.group.position));
+    });
 
-    this.extractionRing.rotation.z += dt * 0.4;
-    const beamMaterial = this.extractionBeam.material as THREE.MeshBasicMaterial;
-    beamMaterial.opacity = 0.055 + Math.sin(performance.now() * 0.003) * 0.018;
-
-    const distance = this.player.position.distanceTo(this.extraction.position);
     const holding = this.input.isPressed("KeyE") || this.touch.extract;
-    if (distance < 2.35 && holding) {
+    if (nearestDistance < 2.35 && holding) {
       this.extractionProgress = Math.min(1, this.extractionProgress + dt / 2.1);
       this.message = "Transfer lock acquired";
       this.messageTime = 0.2;
       if (this.extractionProgress >= 1) this.finish(true, "extracted");
     } else {
       this.extractionProgress = Math.max(0, this.extractionProgress - dt * 0.75);
-      if (distance < 2.35 && this.messageTime <= 0) {
+      if (nearestDistance < 2.35 && this.messageTime <= 0) {
         this.message = "Hold E to extract";
         this.messageTime = 0.25;
       }
@@ -419,12 +466,21 @@ export class GameEngine {
     this.createBurst(enemy.group.position, enemy.kind === "hunter" ? 0xff465d : 0xffb23e);
     this.spawnPickup(enemy.group.position, enemy.kind === "hunter" ? 35 : 55);
     if (this.kills === REQUIRED_KILLS) {
-      this.message = "Objective complete — extraction online";
+      this.message = "Objective complete — extract when ready";
       this.messageTime = 3;
+    } else if (this.kills > REQUIRED_KILLS) {
+      this.message = "Machine destroyed — reinforcements inbound";
+      this.messageTime = 1.1;
     } else {
       this.message = `${REQUIRED_KILLS - this.kills} machines remain`;
       this.messageTime = 1.1;
     }
+    const timer = window.setTimeout(() => {
+      const timerIndex = this.respawnTimers.indexOf(timer);
+      if (timerIndex >= 0) this.respawnTimers.splice(timerIndex, 1);
+      if (!this.ended) this.spawnReplacementEnemy(enemy.kind);
+    }, ENEMY_RESPAWN_DELAY_MS);
+    this.respawnTimers.push(timer);
   }
 
   private spawnPickup(position: THREE.Vector3, value: number) {
@@ -540,7 +596,7 @@ export class GameEngine {
       requiredKills: REQUIRED_KILLS,
       salvage: this.salvage,
       timeLeft: Math.max(0, Math.ceil(this.timeLeft)),
-      extractionUnlocked: this.kills >= REQUIRED_KILLS,
+      extractionUnlocked: true,
       extractionProgress: this.extractionProgress,
       reloading: this.reloadRemaining > 0,
       message: this.messageTime > 0 ? this.message : "",
@@ -553,11 +609,10 @@ export class GameEngine {
           kind: enemy.kind,
         })),
         pickups: this.pickups.map((pickup) => ({ x: pickup.mesh.position.x, z: pickup.mesh.position.z })),
-        extraction: {
-          x: this.extraction.position.x,
-          z: this.extraction.position.z,
-          unlocked: this.kills >= REQUIRED_KILLS,
-        },
+        extractions: this.extractions.map((extraction) => ({
+          x: extraction.group.position.x,
+          z: extraction.group.position.z,
+        })),
       },
     });
   }

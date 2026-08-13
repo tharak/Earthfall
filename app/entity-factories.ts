@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { PLAYER_HEIGHT_METERS, PLAYER_RADIUS_METERS, SKINS } from "./game-config";
-import type { EnemyEntity, EnemyKind, SkinId } from "./game-types";
+import type { EnemyEntity, EnemyKind, ExtractionEntity, SkinId } from "./game-types";
 
 export function createPlayer(skinId: SkinId) {
   const group = new THREE.Group();
@@ -27,7 +27,7 @@ export function createPlayer(skinId: SkinId) {
   return { group, body, accent };
 }
 
-export function createExtractionPoint() {
+export function createExtractionPoint(): ExtractionEntity {
   const group = new THREE.Group();
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(2.15, 2.45, 64),
@@ -41,7 +41,6 @@ export function createExtractionPoint() {
   );
   beam.position.y = 3.5;
   group.add(ring, beam);
-  group.visible = false;
   return { group, ring, beam };
 }
 

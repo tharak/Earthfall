@@ -8,7 +8,7 @@ export type TacticalMapState = {
   player: { x: number; z: number; heading: number };
   enemies: Array<{ id: number; x: number; z: number; kind: EnemyKind }>;
   pickups: Array<{ x: number; z: number }>;
-  extraction: { x: number; z: number; unlocked: boolean };
+  extractions: Array<{ x: number; z: number }>;
 };
 
 export type MissionHud = {
@@ -85,6 +85,12 @@ export type PickupEntity = {
   value: number;
   baseY: number;
   phase: number;
+};
+
+export type ExtractionEntity = {
+  group: THREE.Group;
+  ring: THREE.Mesh;
+  beam: THREE.Mesh;
 };
 
 export type TimedObject = {

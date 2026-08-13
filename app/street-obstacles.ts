@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { RealMapData } from "./map-content";
 import { pointInMapObstacle, type MapPolygonObstacle } from "./real-map";
 import type { BoxObstacle } from "./game-types";
+import { EXTRACTION_POSITIONS } from "./game-config";
 
 type StreetPropKind = "car" | "barrier" | "crates" | "rubble" | "lamp";
 type Placement = { x: number; z: number; angle: number; kind: StreetPropKind; variant: number };
@@ -23,7 +24,8 @@ function generatePlacements(mapData: RealMapData, mapObstacles: MapPolygonObstac
   const placements: Placement[] = [];
   const occupied: Array<[number, number]> = [];
   const isClear = (x: number, z: number) => {
-    if (Math.hypot(x, z) < 16 || Math.hypot(x, z - 100) < 8 || Math.hypot(x + 120, z - 90) < 8) return false;
+    if (Math.hypot(x, z) < 16 || Math.hypot(x, z - 100) < 8) return false;
+    if (EXTRACTION_POSITIONS.some(([exitX, exitZ]) => Math.hypot(x - exitX, z - exitZ) < 8)) return false;
     if (Math.abs(x) > missionRadius - 4 || Math.abs(z) > missionRadius - 4) return false;
     if (mapObstacles.some((obstacle) => pointInMapObstacle(x, z, obstacle))) return false;
     return !occupied.some(([otherX, otherZ]) => Math.hypot(x - otherX, z - otherZ) < 5.5);
