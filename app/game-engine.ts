@@ -141,6 +141,10 @@ const REQUIRED_KILLS = 8;
 const MISSION_SECONDS = 180;
 const AUTHORED_LAYOUT_SCALE = gameScale.authoredLayoutScale;
 const MISSION_RADIUS_METERS = 185;
+const CAMERA_HEIGHT_METERS = 16;
+const CAMERA_TRAIL_METERS = 18;
+const CAMERA_MIN_TRAIL_METERS = 5;
+const CAMERA_COLLISION_RADIUS_METERS = 1.25;
 
 export class GameEngine {
   private readonly canvas: HTMLCanvasElement;
@@ -154,6 +158,7 @@ export class GameEngine {
   private readonly raycaster = new THREE.Raycaster();
   private readonly pointer = new THREE.Vector2(0.2, 0);
   private readonly aimPoint = new THREE.Vector3(0, 0, -8);
+  private readonly cameraTrailDirection = new THREE.Vector2(0, 1);
   private readonly enemies: EnemyEntity[] = [];
   private readonly pickups: PickupEntity[] = [];
   private readonly timedObjects: TimedObject[] = [];
@@ -216,8 +221,8 @@ export class GameEngine {
 
     this.scene.background = new THREE.Color(0xaed6e5);
     this.scene.fog = new THREE.FogExp2(0xc1dce3, 0.008);
-    this.camera.position.set(0, 23, 125);
-    this.camera.lookAt(0, 0, 98);
+    this.camera.position.set(0, CAMERA_HEIGHT_METERS, 100 + CAMERA_TRAIL_METERS);
+    this.camera.lookAt(0, 0.9, 97.5);
 
     const skin = SKINS[skinId];
     this.playerBody = new THREE.Mesh(
@@ -661,13 +666,71 @@ export class GameEngine {
   }
 
   private updateCamera(dt: number) {
-    const target = new THREE.Vector3(this.player.position.x, 23, this.player.position.z + 25);
+    const cameraPlacement = this.findCameraPlacement();
+    const target = new THREE.Vector3(
+      this.player.position.x + cameraPlacement.direction.x * cameraPlacement.distance,
+      CAMERA_HEIGHT_METERS,
+      this.player.position.z + cameraPlacement.direction.y * cameraPlacement.distance,
+    );
     this.camera.position.lerp(target, 1 - Math.exp(-dt * 7));
     if (this.cameraShake > 0) {
       this.camera.position.x += (Math.random() - 0.5) * this.cameraShake;
       this.camera.position.y += (Math.random() - 0.5) * this.cameraShake * 0.5;
     }
-    this.camera.lookAt(this.player.position.x, 0, this.player.position.z - 1.8);
+    this.camera.lookAt(
+      this.player.position.x - cameraPlacement.direction.x * 2.5,
+      0.9,
+      this.player.position.z - cameraPlacement.direction.y * 2.5,
+    );
+  }
+
+  private findCameraPlacement() {
+    let bestDirection = this.cameraTrailDirection.clone();
+    let bestDistance = this.findCameraClearance(bestDirection);
+    if (bestDistance < CAMERA_TRAIL_METERS - 0.5) {
+      for (let index = 0; index < 16; index += 1) {
+        const angle = (index / 16) * Math.PI * 2;
+        const direction = new THREE.Vector2(Math.sin(angle), Math.cos(angle));
+        const distance = this.findCameraClearance(direction);
+        if (distance > bestDistance) {
+          bestDirection = direction;
+          bestDistance = distance;
+        }
+      }
+      this.cameraTrailDirection.copy(bestDirection);
+    }
+    return { direction: this.cameraTrailDirection, distance: bestDistance };
+  }
+
+  private findCameraClearance(direction: THREE.Vector2) {
+    const step = 0.5;
+    let safeDistance = CAMERA_MIN_TRAIL_METERS;
+    for (let distance = CAMERA_MIN_TRAIL_METERS; distance <= CAMERA_TRAIL_METERS; distance += step) {
+      const x = this.player.position.x + direction.x * distance;
+      const z = this.player.position.z + direction.y * distance;
+      if (this.cameraPositionBlocked(x, z)) break;
+      safeDistance = distance;
+    }
+    return safeDistance;
+  }
+
+  private cameraPositionBlocked(x: number, z: number) {
+    const radius = CAMERA_COLLISION_RADIUS_METERS;
+    const probes = [
+      [x, z],
+      [x - radius, z],
+      [x + radius, z],
+      [x, z - radius],
+      [x, z + radius],
+    ];
+    return probes.some(([probeX, probeZ]) =>
+      this.mapObstacles.some((obstacle) => pointInMapObstacle(probeX, probeZ, obstacle))
+      || this.obstacles.some((obstacle) =>
+        probeX >= obstacle.minX
+        && probeX <= obstacle.maxX
+        && probeZ >= obstacle.minZ
+        && probeZ <= obstacle.maxZ),
+    );
   }
 
   private shoot() {

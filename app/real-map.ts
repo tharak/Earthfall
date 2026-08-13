@@ -38,8 +38,10 @@ function createRoads(mapData: RealMapData) {
       const b: [number, number, number] = [x0 - px, 0.025, z0 - pz];
       const c: [number, number, number] = [x1 - px, 0.025, z1 - pz];
       const d: [number, number, number] = [x1 + px, 0.025, z1 + pz];
-      pushTriangle(positions, a, b, c);
-      pushTriangle(positions, a, c, d);
+      // Wind road faces counter-clockwise when viewed from above so the
+      // default front-side material is visible to the gameplay camera.
+      pushTriangle(positions, a, c, b);
+      pushTriangle(positions, a, d, c);
     }
   }
   const geometry = new THREE.BufferGeometry();
@@ -67,7 +69,12 @@ function createBuildings(mapData: RealMapData) {
     const points = building.footprint.map(([x, z]) => [x * MAP_METERS_TO_WORLD, z * MAP_METERS_TO_WORLD] as Point);
     if (points.length < 3) continue;
     const landmark = building.name === mapData.metadata.centerLandmark;
-    const height = Math.max(0.35, building.height * MAP_METERS_TO_WORLD * 0.72);
+    // OSM heights remain proportional, but are vertically compressed for the
+    // tactical camera. Footprints and horizontal distances stay meter-accurate.
+    const height = Math.min(
+      landmark ? 34 : 12,
+      Math.max(2.8, building.height * MAP_METERS_TO_WORLD * 0.35),
+    );
     const contour = points.map(([x, z]) => new THREE.Vector2(x, z));
     const triangles = THREE.ShapeUtils.triangulateShape(contour, []);
     baseColor.setHex(landmark ? 0xc5ad83 : building.id % 3 === 0 ? 0x879598 : building.id % 3 === 1 ? 0x718185 : 0x9ba5a3);
@@ -155,8 +162,8 @@ function createLandmarkBeacon(mapData: RealMapData) {
     const spireMaterial = new THREE.MeshStandardMaterial({ color: 0xd0b98d, emissive: 0x17363b, emissiveIntensity: 0.12, roughness: 0.72 });
     const northSpire = new THREE.Mesh(new THREE.ConeGeometry(2.2, 16, 8), spireMaterial);
     const southSpire = northSpire.clone();
-    northSpire.position.set(-19, 74, 7);
-    southSpire.position.set(19, 74, 7);
+    northSpire.position.set(-19, 42, 7);
+    southSpire.position.set(19, 42, 7);
     group.add(northSpire, southSpire);
   } else {
     group.add(createCrossingMarkings(mapData));

@@ -36,5 +36,6 @@ Full successful and failed combat runs still need an independent local playtest.
 - Shibuya map extent: 1,024 × 1,024 m centered on Shibuya Scramble Crossing at `35.6594951, 139.7004982`; extract bounds are south `35.6548957`, west `139.6948374`, north `35.6640945`, east `139.7061590`.
 - The committed Shibuya extract contains 1,828 buildings, 1,487 road ways, and the crossing's 64-point source area. It uses the same ODbL attribution and generator pipeline as São Paulo.
 - Physical scale is one world unit per meter. The player capsule is 1.80 m tall (`0.48 m` radius plus a `0.84 m` straight section); authored mission placements are expanded to preserve the intended 400 m combat footprint.
+- Rendering repair: road faces use upward winding, OSM building heights are tactically compressed while footprints remain meter-accurate, and the camera selects a collision-free street corridor around the player.
 - Prototype perspective: elevated third person / isometric to validate the full extraction loop with simple geometry.
 - Paid items remain direct-purchase cosmetic previews; no checkout or random rewards in v0.1.
