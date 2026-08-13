@@ -10,11 +10,13 @@ import {
   type WeaponId,
 } from "./game-engine";
 import { MiniMap } from "./mini-map";
+import { MISSION_MAPS, type MissionMapId } from "./map-content";
 
 type Screen = "command" | "mission" | "debrief";
 
 type Mission = {
   id: string;
+  mapId: MissionMapId | null;
   city: string;
   country: string;
   zone: string;
@@ -28,6 +30,7 @@ type Mission = {
 const MISSIONS: Mission[] = [
   {
     id: "sao-paulo",
+    mapId: "sao-paulo",
     city: "SÃO PAULO",
     country: "BRAZIL",
     zone: "PRAÇA DA SÉ",
@@ -39,17 +42,19 @@ const MISSIONS: Mission[] = [
   },
   {
     id: "tokyo",
+    mapId: "tokyo",
     city: "TOKYO",
     country: "JAPAN",
-    zone: "SHIBUYA",
+    zone: "SHIBUYA CROSSING",
     coordinates: "35.6595° N / 139.7005° E",
     threat: "LEVEL 05",
-    status: "SCANNING",
-    reward: "CLASSIFIED",
-    enemies: "SIGNAL LOST",
+    status: "PLAYABLE",
+    reward: "420–620 CR",
+    enemies: "HUNTERS / SENTRIES",
   },
   {
     id: "cairo",
+    mapId: null,
     city: "CAIRO",
     country: "EGYPT",
     zone: "TAHRIR SQUARE",
@@ -61,6 +66,7 @@ const MISSIONS: Mission[] = [
   },
   {
     id: "paris",
+    mapId: null,
     city: "PARIS",
     country: "FRANCE",
     zone: "RÉPUBLIQUE",
@@ -109,11 +115,13 @@ function formatTime(seconds: number) {
 }
 
 function MissionStage({
+  mission,
   weapon,
   skin,
   onEnd,
   onAbort,
 }: {
+  mission: Mission & { mapId: MissionMapId };
   weapon: WeaponId;
   skin: SkinId;
   onEnd: (result: MissionResult) => void;
@@ -137,7 +145,7 @@ function MissionStage({
     let engine: GameEngine | null = null;
     let errorFrame = 0;
     try {
-      engine = new GameEngine(canvasRef.current, weapon, skin, touchRef.current, setHud, onEnd);
+      engine = new GameEngine(canvasRef.current, mission.mapId, weapon, skin, touchRef.current, setHud, onEnd);
     } catch {
       errorFrame = window.requestAnimationFrame(() => setWebglUnavailable(true));
     }
@@ -145,7 +153,7 @@ function MissionStage({
       if (errorFrame) window.cancelAnimationFrame(errorFrame);
       engine?.destroy();
     };
-  }, [onEnd, skin, weapon]);
+  }, [mission.mapId, onEnd, skin, weapon]);
 
   if (webglUnavailable) {
     return (
@@ -166,12 +174,12 @@ function MissionStage({
 
   return (
     <main className="mission-shell">
-      <canvas ref={canvasRef} className="mission-canvas" aria-label="Playable São Paulo extraction mission" />
+      <canvas ref={canvasRef} className="mission-canvas" aria-label={`Playable ${mission.city} extraction mission`} />
       <div className="mission-vignette" />
 
       <header className="mission-topbar">
         <div className="wordmark compact"><span>EARTHFALL</span><strong>PROTOCOL</strong></div>
-        <div className="mission-location"><span>ZONE 01</span><strong>PRAÇA DA SÉ · SÃO PAULO</strong></div>
+        <div className="mission-location"><span>ZONE 0{MISSIONS.findIndex((item) => item.id === mission.id) + 1}</span><strong>{mission.zone} · {mission.city}</strong></div>
         <div className="mission-clock"><span>WINDOW</span><strong>{formatTime(hud.timeLeft)}</strong></div>
       </header>
 
@@ -203,7 +211,7 @@ function MissionStage({
         <small>LOST ON FAILURE</small>
       </aside>
 
-      <MiniMap state={hud.tacticalMap} />
+      <MiniMap state={hud.tacticalMap} mapData={MISSION_MAPS[mission.mapId]} />
 
       <a className="map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
         MAP DATA © OPENSTREETMAP CONTRIBUTORS · ODBL
@@ -269,8 +277,8 @@ export default function Home() {
     setScreen("debrief");
   };
 
-  if (screen === "mission") {
-    return <MissionStage weapon={weapon} skin={skin} onEnd={finishMission} onAbort={() => setScreen("command")} />;
+  if (screen === "mission" && mission.mapId) {
+    return <MissionStage mission={{ ...mission, mapId: mission.mapId }} weapon={weapon} skin={skin} onEnd={finishMission} onAbort={() => setScreen("command")} />;
   }
 
   if (screen === "debrief" && result) {
@@ -310,7 +318,7 @@ export default function Home() {
         <div className="mission-index">
           <span className="section-tag">GLOBAL OCCUPATION MAP</span>
           <h1>CHOOSE A<br /><em>DROP ZONE</em></h1>
-          <p>Alien carrier signals are active in four population centers. One corridor is open for deployment.</p>
+          <p>Alien carrier signals are active in four population centers. Two corridors are open for deployment.</p>
 
           <div className="mission-list" role="list">
             {MISSIONS.map((item, index) => (
@@ -336,8 +344,8 @@ export default function Home() {
             <div className="continent c-one" />
             <div className="continent c-two" />
             <div className="continent c-three" />
-            <button className="world-node node-one active" aria-label="São Paulo active mission"><i /><span>SÃO PAULO</span></button>
-            <button className="world-node node-two" aria-label="Tokyo scanning"><i /><span>TOKYO</span></button>
+            <button className={`world-node node-one ${selectedMission === "sao-paulo" ? "active" : ""}`} aria-label="Select São Paulo mission" onClick={() => setSelectedMission("sao-paulo")}><i /><span>SÃO PAULO</span></button>
+            <button className={`world-node node-two ${selectedMission === "tokyo" ? "active" : ""}`} aria-label="Select Tokyo mission" onClick={() => setSelectedMission("tokyo")}><i /><span>TOKYO</span></button>
             <button className="world-node node-three" aria-label="Cairo scanning"><i /><span>CAIRO</span></button>
           </div>
           <div className="earth-caption"><span>INVASION DAY</span><strong>017</strong></div>
@@ -417,7 +425,7 @@ export default function Home() {
       {briefing && (
         <div className="modal-backdrop briefing-backdrop">
           <section className="deployment-modal" role="dialog" aria-modal="true" aria-labelledby="deploy-title">
-            <div className="deployment-number">01</div>
+            <div className="deployment-number">0{MISSIONS.findIndex((item) => item.id === mission.id) + 1}</div>
             <span className="section-tag">DEPLOYMENT AUTHORIZATION</span>
             <h2 id="deploy-title">ENTER THE OCCUPATION ZONE?</h2>
             <p>Salvage collected in the zone remains unsecured until extraction. Failure leaves it behind.</p>

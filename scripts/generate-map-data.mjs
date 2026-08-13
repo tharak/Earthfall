@@ -3,15 +3,39 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-const CENTER = { lat: -23.5512688, lon: -46.6343705 };
+const PROFILES = {
+  "praca-da-se": {
+    center: { lat: -23.5512688, lon: -46.6343705 },
+    id: "praca-da-se-1024",
+    title: "Praça da Sé — Catedral da Sé",
+    centerLandmark: "Catedral da Sé",
+    landmarkKind: "cathedral",
+    landmarkOsmId: 8093737,
+    output: "app/data/praca-da-se-map.json",
+  },
+  "shibuya-crossing": {
+    center: { lat: 35.6594951, lon: 139.7004982 },
+    id: "shibuya-crossing-1024",
+    title: "Shibuya — Scramble Crossing",
+    centerLandmark: "Shibuya Scramble Crossing",
+    landmarkKind: "crossing",
+    landmarkOsmId: 1335178864,
+    output: "app/data/shibuya-crossing-map.json",
+  },
+};
+
+const profileName = process.argv[2] ?? "praca-da-se";
+const profile = PROFILES[profileName];
+if (!profile) throw new Error(`Unknown map profile: ${profileName}`);
+const CENTER = profile.center;
 const SIZE_METERS = 1024;
 const HALF_SIZE = SIZE_METERS / 2;
 const METERS_PER_LATITUDE_DEGREE = 111_320;
 const METERS_PER_LONGITUDE_DEGREE =
   METERS_PER_LATITUDE_DEGREE * Math.cos((CENTER.lat * Math.PI) / 180);
 
-const input = resolve(process.argv[2] ?? "/tmp/earthfall-se-overpass.json");
-const output = resolve(process.argv[3] ?? "app/data/praca-da-se-map.json");
+const input = resolve(process.argv[3] ?? `/tmp/earthfall-${profileName}-overpass.json`);
+const output = resolve(process.argv[4] ?? profile.output);
 
 const source = JSON.parse(await readFile(input, "utf8"));
 
@@ -114,12 +138,23 @@ const roads = source.elements
   }))
   .filter((road) => road.path.length >= 2);
 
+const landmarks = source.elements
+  .filter((element) => element.type === "way" && element.id === profile.landmarkOsmId)
+  .map((element) => ({
+    id: element.id,
+    name: profile.centerLandmark,
+    kind: profile.landmarkKind,
+    footprint: geometryFor(element, true),
+  }))
+  .filter((landmark) => landmark.footprint.length >= 3);
+
 const dataset = {
   metadata: {
-    id: "praca-da-se-1024",
-    title: "Praça da Sé — Catedral da Sé",
+    id: profile.id,
+    title: profile.title,
     center: CENTER,
-    centerLandmark: "Catedral da Sé",
+    centerLandmark: profile.centerLandmark,
+    landmarkKind: profile.landmarkKind,
     sizeMeters: SIZE_METERS,
     source: "OpenStreetMap contributors",
     sourceUrl: "https://www.openstreetmap.org/copyright",
@@ -128,7 +163,8 @@ const dataset = {
   },
   buildings,
   roads,
+  landmarks,
 };
 
 await writeFile(output, `${JSON.stringify(dataset)}\n`);
-console.log(`Generated ${output}: ${buildings.length} buildings, ${roads.length} roads.`);
+console.log(`Generated ${output}: ${buildings.length} buildings, ${roads.length} roads, ${landmarks.length} landmark areas.`);

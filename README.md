@@ -1,6 +1,6 @@
 # Earthfall Protocol
 
-A geometry-first extraction-shooter prototype set in a recognizable urban zone. Choose a weapon and cosmetic suit finish, deploy into an abstracted Praça da Sé, destroy alien machines, collect unsecured salvage, and reach extraction to bank it.
+A geometry-first extraction-shooter prototype set in recognizable urban zones. Choose a weapon and cosmetic suit finish, deploy into real-data abstractions of Praça da Sé or Shibuya Crossing, destroy alien machines, collect unsecured salvage, and reach extraction to bank it.
 
 This is an original-IP project. It does not include Gantz characters, terminology, designs, story text, or assets.
 
@@ -36,10 +36,11 @@ The static GitHub Pages artifact is written to `github-pages/`. Its paths are re
 
 ## Real-world map data
 
-The São Paulo mission uses a committed 1,024 × 1,024 m extract centered on Catedral da Sé. Building footprints and roads come from OpenStreetMap contributors under ODbL 1.0; Google Maps content is not copied or redistributed. To refresh the dataset, export an Overpass JSON response with building and highway ways for the bounds recorded in `WORKBENCH.md`, then run:
+The São Paulo and Tokyo missions use committed 1,024 × 1,024 m extracts centered on Catedral da Sé and Shibuya Scramble Crossing. Building footprints and roads come from OpenStreetMap contributors under ODbL 1.0; Google Maps content is not copied or redistributed. To refresh a dataset, export an Overpass JSON response with building, highway, and landmark ways for the bounds recorded in `WORKBENCH.md`, then run:
 
 ```bash
-npm run generate:map -- path/to/overpass.json app/data/praca-da-se-map.json
+npm run generate:map -- praca-da-se path/to/overpass.json app/data/praca-da-se-map.json
+npm run generate:map -- shibuya-crossing path/to/overpass.json app/data/shibuya-crossing-map.json
 ```
 
 ## Publish with GitHub Pages

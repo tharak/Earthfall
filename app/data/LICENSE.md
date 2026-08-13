@@ -1,6 +1,6 @@
 # Map data license
 
-`praca-da-se-map.json` contains an adapted extract of OpenStreetMap data.
+`praca-da-se-map.json` and `shibuya-crossing-map.json` contain adapted extracts of OpenStreetMap data.
 
 © OpenStreetMap contributors. The map database is available under the Open Data Commons Open Database License (ODbL) 1.0: https://www.openstreetmap.org/copyright
 

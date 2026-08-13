@@ -177,7 +177,7 @@ Training, evaluation, safety constraints, and online inference are out of scope 
 | City | Zone | Status | Environmental hook |
 | --- | --- | --- | --- |
 | São Paulo | Praça da Sé | Playable prototype | Broad plaza, dense perimeter, relay ship overhead |
-| Tokyo | Shibuya Crossing | Preview only | Intersections, screens, vertical sightlines |
+| Tokyo | Shibuya Crossing | Playable prototype | Intersections, screens, vertical sightlines |
 | Cairo | Tahrir Square | Preview only | Open approaches, heat haze, long-range sentries |
 | Paris | Place de la République | Preview only | Monument focal point and concentric pressure |
 
@@ -288,7 +288,7 @@ Required seams:
 ### Included in v0.1
 
 - command globe with four city nodes;
-- one playable São Paulo mission;
+- playable São Paulo and Tokyo missions;
 - two selectable weapons;
 - three previewable suit finishes;
 - two rule-based robot archetypes;

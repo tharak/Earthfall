@@ -1,24 +1,5 @@
 import * as THREE from "three";
-import mapJson from "./data/praca-da-se-map.json";
-
-type Point = [number, number];
-type MapBuilding = { id: number; name?: string; kind: string; height: number; footprint: Point[] };
-type MapRoad = { id: number; name?: string; kind: string; width: number; path: Point[] };
-type RealMapData = {
-  metadata: {
-    id: string;
-    title: string;
-    center: { lat: number; lon: number };
-    centerLandmark: string;
-    sizeMeters: number;
-    source: string;
-    sourceUrl: string;
-    license: string;
-    generatedAt: string;
-  };
-  buildings: MapBuilding[];
-  roads: MapRoad[];
-};
+import type { MapPoint as Point, RealMapData } from "./map-content";
 
 export type MapPolygonObstacle = {
   minX: number;
@@ -28,17 +9,15 @@ export type MapPolygonObstacle = {
   points: Point[];
 };
 
-export const PRACA_DA_SE_MAP = mapJson as RealMapData;
 export const MAP_METERS_TO_WORLD = 0.1;
-export const MAP_WORLD_SIZE = PRACA_DA_SE_MAP.metadata.sizeMeters * MAP_METERS_TO_WORLD;
 
 function pushTriangle(target: number[], a: [number, number, number], b: [number, number, number], c: [number, number, number]) {
   target.push(...a, ...b, ...c);
 }
 
-function createRoads() {
+function createRoads(mapData: RealMapData) {
   const positions: number[] = [];
-  for (const road of PRACA_DA_SE_MAP.roads) {
+  for (const road of mapData.roads) {
     for (let index = 1; index < road.path.length; index += 1) {
       const [rawX0, rawZ0] = road.path[index - 1];
       const [rawX1, rawZ1] = road.path[index];
@@ -72,7 +51,7 @@ function createRoads() {
   return mesh;
 }
 
-function createBuildings() {
+function createBuildings(mapData: RealMapData) {
   const positions: number[] = [];
   const colors: number[] = [];
   const obstacles: MapPolygonObstacle[] = [];
@@ -82,10 +61,10 @@ function createBuildings() {
     for (let index = 0; index < vertexCount; index += 1) colors.push(color.r, color.g, color.b);
   };
 
-  for (const building of PRACA_DA_SE_MAP.buildings) {
+  for (const building of mapData.buildings) {
     const points = building.footprint.map(([x, z]) => [x * MAP_METERS_TO_WORLD, z * MAP_METERS_TO_WORLD] as Point);
     if (points.length < 3) continue;
-    const landmark = building.name === PRACA_DA_SE_MAP.metadata.centerLandmark;
+    const landmark = building.name === mapData.metadata.centerLandmark;
     const height = Math.max(0.35, building.height * MAP_METERS_TO_WORLD * 0.72);
     const contour = points.map(([x, z]) => new THREE.Vector2(x, z));
     const triangles = THREE.ShapeUtils.triangulateShape(contour, []);
@@ -133,7 +112,35 @@ function createBuildings() {
   return { mesh, obstacles };
 }
 
-function createLandmarkBeacon() {
+function createCrossingMarkings(mapData: RealMapData) {
+  const group = new THREE.Group();
+  const landmark = mapData.landmarks[0];
+  if (landmark) {
+    const shape = new THREE.Shape(landmark.footprint.map(([x, z]) => new THREE.Vector2(x * MAP_METERS_TO_WORLD, z * MAP_METERS_TO_WORLD)));
+    const field = new THREE.Mesh(
+      new THREE.ShapeGeometry(shape),
+      new THREE.MeshBasicMaterial({ color: 0xd9e2df, transparent: true, opacity: 0.32, side: THREE.DoubleSide }),
+    );
+    field.rotation.x = Math.PI / 2;
+    field.position.y = 0.055;
+    group.add(field);
+  }
+  const stripeMaterial = new THREE.MeshBasicMaterial({ color: 0xf4f1dc, transparent: true, opacity: 0.78 });
+  for (const angle of [0, Math.PI / 2, Math.PI * 0.24, -Math.PI * 0.24]) {
+    const stripeGroup = new THREE.Group();
+    for (let stripe = -4; stripe <= 4; stripe += 1) {
+      const marking = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 4.8), stripeMaterial);
+      marking.rotation.x = -Math.PI / 2;
+      marking.position.set(stripe * 0.52, 0.075, 0);
+      stripeGroup.add(marking);
+    }
+    stripeGroup.rotation.y = angle;
+    group.add(stripeGroup);
+  }
+  return group;
+}
+
+function createLandmarkBeacon(mapData: RealMapData) {
   const group = new THREE.Group();
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(5.8, 6.05, 64),
@@ -141,26 +148,31 @@ function createLandmarkBeacon() {
   );
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.08;
-  const spireMaterial = new THREE.MeshStandardMaterial({ color: 0xd0b98d, emissive: 0x17363b, emissiveIntensity: 0.12, roughness: 0.72 });
-  const northSpire = new THREE.Mesh(new THREE.ConeGeometry(0.42, 3.2, 8), spireMaterial);
-  const southSpire = northSpire.clone();
-  northSpire.position.set(-1.9, 8.15, 0.7);
-  southSpire.position.set(1.9, 8.15, 0.7);
-  group.add(ring, northSpire, southSpire);
+  group.add(ring);
+  if (mapData.metadata.landmarkKind === "cathedral") {
+    const spireMaterial = new THREE.MeshStandardMaterial({ color: 0xd0b98d, emissive: 0x17363b, emissiveIntensity: 0.12, roughness: 0.72 });
+    const northSpire = new THREE.Mesh(new THREE.ConeGeometry(0.42, 3.2, 8), spireMaterial);
+    const southSpire = northSpire.clone();
+    northSpire.position.set(-1.9, 8.15, 0.7);
+    southSpire.position.set(1.9, 8.15, 0.7);
+    group.add(northSpire, southSpire);
+  } else {
+    group.add(createCrossingMarkings(mapData));
+  }
   return group;
 }
 
-export function createRealMap() {
+export function createRealMap(mapData: RealMapData) {
   const group = new THREE.Group();
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(MAP_WORLD_SIZE, MAP_WORLD_SIZE),
+    new THREE.PlaneGeometry(mapData.metadata.sizeMeters * MAP_METERS_TO_WORLD, mapData.metadata.sizeMeters * MAP_METERS_TO_WORLD),
     new THREE.MeshStandardMaterial({ color: 0x77877d, roughness: 0.94, metalness: 0.04 }),
   );
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
-  group.add(ground, createRoads());
-  const buildings = createBuildings();
-  group.add(buildings.mesh, createLandmarkBeacon());
+  group.add(ground, createRoads(mapData));
+  const buildings = createBuildings(mapData);
+  group.add(buildings.mesh, createLandmarkBeacon(mapData));
   return { group, obstacles: buildings.obstacles };
 }
 

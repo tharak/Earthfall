@@ -1,6 +1,6 @@
 import { memo } from "react";
-import { PRACA_DA_SE_MAP } from "./real-map";
 import type { TacticalMapState } from "./game-engine";
+import type { RealMapData } from "./map-content";
 
 const VIEW_RADIUS_METERS = 200;
 const VIEW_SIZE = 200;
@@ -18,10 +18,9 @@ function intersectsView(points: Array<[number, number]>) {
   return points.some(([x, z]) => Math.abs(x) <= VIEW_RADIUS_METERS && Math.abs(z) <= VIEW_RADIUS_METERS);
 }
 
-const buildings = PRACA_DA_SE_MAP.buildings.filter((building) => intersectsView(building.footprint));
-const roads = PRACA_DA_SE_MAP.roads.filter((road) => intersectsView(road.path));
-
-const MiniMapBase = memo(function MiniMapBase() {
+const MiniMapBase = memo(function MiniMapBase({ mapData }: { mapData: RealMapData }) {
+  const buildings = mapData.buildings.filter((building) => intersectsView(building.footprint));
+  const roads = mapData.roads.filter((road) => intersectsView(road.path));
   return (
     <>
       <g className="mini-map-grid">
@@ -41,8 +40,16 @@ const MiniMapBase = memo(function MiniMapBase() {
         {buildings.map((building) => (
           <polygon
             key={building.id}
-            className={building.name === PRACA_DA_SE_MAP.metadata.centerLandmark ? "landmark" : undefined}
+            className={building.name === mapData.metadata.centerLandmark ? "landmark" : undefined}
             points={building.footprint.map(([x, z]) => mapPoint(x, z).join(",")).join(" ")}
+          />
+        ))}
+      </g>
+      <g className="mini-map-landmark-area">
+        {mapData.landmarks.map((landmark) => (
+          <polygon
+            key={landmark.id}
+            points={landmark.footprint.map(([x, z]) => mapPoint(x, z).join(",")).join(" ")}
           />
         ))}
       </g>
@@ -54,7 +61,7 @@ const MiniMapBase = memo(function MiniMapBase() {
   );
 });
 
-export function MiniMap({ state }: { state: TacticalMapState }) {
+export function MiniMap({ state, mapData }: { state: TacticalMapState; mapData: RealMapData }) {
   const [playerX, playerY] = worldPoint(state.player.x, state.player.z);
   const [extractX, extractY] = worldPoint(state.extraction.x, state.extraction.z);
 
@@ -63,7 +70,7 @@ export function MiniMap({ state }: { state: TacticalMapState }) {
       <header><span>TACTICAL MAP</span><b>400 M</b></header>
       <svg viewBox="0 0 200 200" role="img" aria-label="Nearby streets, buildings, enemies, and objectives">
         <rect className="mini-map-background" width="200" height="200" />
-        <MiniMapBase />
+        <MiniMapBase mapData={mapData} />
         <g className="mini-map-contacts">
           {state.pickups.map((pickup, index) => {
             const [x, y] = worldPoint(pickup.x, pickup.z);

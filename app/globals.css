@@ -242,6 +242,7 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .mini-map-roads { fill: none; stroke: rgba(129, 174, 177, 0.32); stroke-linecap: round; stroke-linejoin: round; }
 .mini-map-buildings { fill: rgba(89, 113, 116, 0.34); stroke: rgba(130, 162, 164, 0.18); stroke-width: 0.25; }
 .mini-map-buildings .landmark { fill: rgba(92, 231, 255, 0.2); stroke: var(--cyan); stroke-width: 0.75; }
+.mini-map-landmark-area { fill: rgba(92, 231, 255, 0.16); stroke: var(--cyan); stroke-width: 0.8; }
 .mini-map-landmark circle { fill: none; stroke: rgba(92, 231, 255, 0.58); stroke-width: 0.75; }
 .mini-map-landmark path { fill: rgba(92, 231, 255, 0.7); }
 .mini-map-contacts .enemy { fill: #ff4f5d; stroke: #ffd0d3; stroke-width: 0.45; }

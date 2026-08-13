@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { createRealMap, pointInMapObstacle, type MapPolygonObstacle } from "./real-map";
+import { MISSION_MAPS, type MissionMapId, type RealMapData } from "./map-content";
 
 export type WeaponId = "arc" | "pulse";
 export type SkinId = "carbon" | "salvage" | "signal";
@@ -154,6 +155,7 @@ export class GameEngine {
   private readonly mapObstacles: MapPolygonObstacle[] = [];
   private readonly keys = new Set<string>();
   private readonly touch: TouchInput;
+  private readonly mapData: RealMapData;
   private readonly weaponId: WeaponId;
   private readonly weapon: (typeof WEAPONS)[WeaponId];
   private readonly onHud: (hud: MissionHud) => void;
@@ -182,6 +184,7 @@ export class GameEngine {
 
   constructor(
     canvas: HTMLCanvasElement,
+    mapId: MissionMapId,
     weaponId: WeaponId,
     skinId: SkinId,
     touch: TouchInput,
@@ -189,6 +192,7 @@ export class GameEngine {
     onEnd: (result: MissionResult) => void,
   ) {
     this.canvas = canvas;
+    this.mapData = MISSION_MAPS[mapId];
     this.weaponId = weaponId;
     this.weapon = WEAPONS[weaponId];
     this.ammo = this.weapon.magazine;
@@ -295,7 +299,7 @@ export class GameEngine {
     redGlow.position.set(10, 7, -16);
     this.scene.add(redGlow);
 
-    const realMap = createRealMap();
+    const realMap = createRealMap(this.mapData);
     this.scene.add(realMap.group);
     this.mapObstacles.push(...realMap.obstacles);
     this.player.position.copy(this.findOpenPosition(this.player.position.x, this.player.position.z));
