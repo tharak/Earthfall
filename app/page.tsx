@@ -410,13 +410,36 @@ export default function Home() {
         <div className="modal-backdrop briefing-backdrop">
           <section className="deployment-modal" role="dialog" aria-modal="true" aria-labelledby="deploy-title">
             <div className="deployment-number">0{MISSIONS.findIndex((item) => item.id === mission.id) + 1}</div>
-            <span className="section-tag">DEPLOYMENT AUTHORIZATION</span>
-            <h2 id="deploy-title">ENTER THE OCCUPATION ZONE?</h2>
-            <p>Salvage collected in the zone remains unsecured until extraction. Failure leaves it behind.</p>
-            <div className="deploy-summary">
-              <span>{mission.zone}<b>{mission.city}</b></span>
-              <span>PRIMARY<b>8 MACHINES</b></span>
-              <span>LOADOUT<b>{WEAPONS.find((item) => item.id === weapon)?.name}</b></span>
+            <span className="section-tag">MISSION LOADOUT</span>
+            <h2 id="deploy-title">CHOOSE YOUR EQUIPMENT</h2>
+            <p>Select your weapon and suit before entering the occupation zone.</p>
+            <div className="deploy-zone-summary">
+              <span>DROP ZONE<strong>{mission.zone} · {mission.city}</strong></span>
+              <span>OBJECTIVE<strong>DISMANTLE 8 MACHINES</strong></span>
+            </div>
+            <div className="deployment-picker">
+              <section>
+                <span className="eyebrow">PRIMARY WEAPON</span>
+                <div className="deploy-weapon-options">
+                  {WEAPONS.map((item) => (
+                    <button key={item.id} className={`deploy-weapon ${weapon === item.id ? "selected" : ""}`} aria-pressed={weapon === item.id} onClick={() => setWeapon(item.id)}>
+                      <i className={`weapon-shape ${item.id}`} />
+                      <span><small>{item.type}</small><strong>{item.name}</strong><em>{item.stat}</em></span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+              <section>
+                <span className="eyebrow">SUIT FINISH</span>
+                <div className="deploy-skin-options">
+                  {SKINS.map((item) => (
+                    <button key={item.id} className={`deploy-skin ${skin === item.id ? "selected" : ""}`} aria-pressed={skin === item.id} onClick={() => setSkin(item.id)}>
+                      <i className={item.swatch} />
+                      <span><strong>{item.name}</strong><small>{item.note}</small></span>
+                    </button>
+                  ))}
+                </div>
+              </section>
             </div>
             <div className="deployment-actions">
               <button onClick={() => setBriefing(false)}>CANCEL</button>
