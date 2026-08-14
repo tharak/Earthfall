@@ -14,15 +14,15 @@ const DRIVABLE_ROAD_KINDS = new Set([
 
 const MAX_PROPS = 280;
 
-function deterministicHash(value: number) {
+function deterministicHash(value: number): number {
   const x = Math.sin(value * 12.9898 + 78.233) * 43758.5453;
   return x - Math.floor(x);
 }
 
-function generatePlacements(mapData: RealMapData, mapObstacles: MapPolygonObstacle[], missionRadius: number) {
+function generatePlacements(mapData: RealMapData, mapObstacles: MapPolygonObstacle[], missionRadius: number): Placement[] {
   const placements: Placement[] = [];
   const occupied: Array<[number, number]> = [];
-  const isClear = (x: number, z: number) => {
+  const isClear = (x: number, z: number): boolean => {
     if (Math.hypot(x, z) < 16 || Math.hypot(x, z - 100) < 8) return false;
     if (EXTRACTION_POSITIONS.some(([exitX, exitZ]) => Math.hypot(x - exitX, z - exitZ) < 8)) return false;
     if (Math.abs(x) > missionRadius - 4 || Math.abs(z) > missionRadius - 4) return false;
@@ -64,7 +64,7 @@ export function createStreetObstacles(
   mapData: RealMapData,
   mapObstacles: MapPolygonObstacle[],
   missionRadius: number,
-) {
+): BoxObstacle[] {
   const placements = generatePlacements(mapData, mapObstacles, missionRadius);
   const obstacles: BoxObstacle[] = [];
   const addInstances = (
@@ -72,7 +72,7 @@ export function createStreetObstacles(
     material: THREE.Material,
     items: Placement[],
     transform: (item: Placement, matrix: THREE.Matrix4, index: number, mesh: THREE.InstancedMesh) => void,
-  ) => {
+  ): void => {
     if (items.length === 0) return;
     const mesh = new THREE.InstancedMesh(geometry, material, items.length);
     const matrix = new THREE.Matrix4();
@@ -83,14 +83,14 @@ export function createStreetObstacles(
     mesh.receiveShadow = true;
     scene.add(mesh);
   };
-  const matrixFor = (matrix: THREE.Matrix4, item: Placement, y: number, width: number, height: number, depth: number, angle = item.angle) => {
+  const matrixFor = (matrix: THREE.Matrix4, item: Placement, y: number, width: number, height: number, depth: number, angle = item.angle): void => {
     matrix.compose(
       new THREE.Vector3(item.x, y, item.z),
       new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle),
       new THREE.Vector3(width, height, depth),
     );
   };
-  const addCollision = (item: Placement, width: number, depth: number, angle = item.angle) => {
+  const addCollision = (item: Placement, width: number, depth: number, angle = item.angle): void => {
     const halfX = Math.abs(Math.cos(angle)) * width * 0.5 + Math.abs(Math.sin(angle)) * depth * 0.5 + 0.45;
     const halfZ = Math.abs(Math.sin(angle)) * width * 0.5 + Math.abs(Math.cos(angle)) * depth * 0.5 + 0.45;
     obstacles.push({ minX: item.x - halfX, maxX: item.x + halfX, minZ: item.z - halfZ, maxZ: item.z + halfZ });

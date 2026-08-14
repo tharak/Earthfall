@@ -186,5 +186,10 @@ export type MissionEnvironment = {
   obstacles: BoxObstacle[];
 };
 
+export type RealMapScene = {
+  group: THREE.Group;
+  obstacles: MapPolygonObstacle[];
+};
+
 export type MissionHudListener = (hud: MissionHud) => void;
 export type MissionEndListener = (result: MissionResult) => void;

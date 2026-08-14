@@ -4,6 +4,8 @@ import type { BoxObstacle, MissionEnvironment, RealMapData } from "./game-types"
 import { createRealMap } from "./real-map";
 import { createStreetObstacles } from "./street-obstacles";
 
+type CoverPlacement = readonly [x: number, z: number, width: number, depth: number];
+
 export function createMissionEnvironment(scene: THREE.Scene, mapData: RealMapData): MissionEnvironment {
   scene.add(
     new THREE.HemisphereLight(0xf1fbff, 0x667064, 2.4),
@@ -33,9 +35,9 @@ export function createMissionEnvironment(scene: THREE.Scene, mapData: RealMapDat
   return { mapObstacles: realMap.obstacles, obstacles };
 }
 
-function createAuthoredCover(scene: THREE.Scene) {
+function createAuthoredCover(scene: THREE.Scene): BoxObstacle[] {
   const obstacles: BoxObstacle[] = [];
-  const coverData = [
+  const coverData: CoverPlacement[] = [
     [-7, -5, 4, 1.5],
     [7, 5, 4, 1.5],
     [-10, 8, 2, 3.5],
@@ -64,7 +66,7 @@ function createAuthoredCover(scene: THREE.Scene) {
   return obstacles;
 }
 
-function createAlienRelay() {
+function createAlienRelay(): THREE.Group {
   const relay = new THREE.Group();
   const core = new THREE.Mesh(
     new THREE.SphereGeometry(2.5, 10, 6),

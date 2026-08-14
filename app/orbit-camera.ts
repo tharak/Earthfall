@@ -21,7 +21,7 @@ export class OrbitCameraController {
     camera.lookAt(0, FOCUS_HEIGHT_METERS, 97.5);
   }
 
-  handlePointerMove(event: PointerEvent) {
+  handlePointerMove(event: PointerEvent): boolean {
     if (!this.dragging) return false;
     const deltaX = event.clientX - this.dragX;
     const deltaY = event.clientY - this.dragY;
@@ -36,7 +36,7 @@ export class OrbitCameraController {
     return true;
   }
 
-  handlePointerDown(event: PointerEvent) {
+  handlePointerDown(event: PointerEvent): boolean {
     if (event.button !== 2) return false;
     this.dragging = true;
     this.dragX = event.clientX;
@@ -45,14 +45,14 @@ export class OrbitCameraController {
     return true;
   }
 
-  handlePointerUp(event: PointerEvent) {
+  handlePointerUp(event: PointerEvent): boolean {
     if (event.button !== 2) return false;
     this.dragging = false;
     if (this.canvas.hasPointerCapture?.(event.pointerId)) this.canvas.releasePointerCapture(event.pointerId);
     return true;
   }
 
-  update(dt: number, focus: THREE.Vector3, shake: number) {
+  update(dt: number, focus: THREE.Vector3, shake: number): void {
     const horizontalDistance = Math.cos(this.pitch) * ORBIT_DISTANCE_METERS;
     const cameraHeight = Math.sin(this.pitch) * ORBIT_DISTANCE_METERS;
     const directionX = Math.sin(this.yaw);

@@ -1,15 +1,18 @@
 import * as THREE from "three";
-import type { MapPoint as Point, MapPolygonObstacle, RealMapData } from "./game-types";
+import type { MapPoint as Point, MapPolygonObstacle, RealMapData, RealMapScene } from "./game-types";
 import gameScale from "./game-scale.json";
+
+type TrianglePoint = [number, number, number];
+type BuildingScene = { mesh: THREE.Mesh; obstacles: MapPolygonObstacle[] };
 
 // One Three.js world unit is one physical meter.
 export const MAP_METERS_TO_WORLD = 1 / gameScale.metersPerWorldUnit;
 
-function pushTriangle(target: number[], a: [number, number, number], b: [number, number, number], c: [number, number, number]) {
+function pushTriangle(target: number[], a: TrianglePoint, b: TrianglePoint, c: TrianglePoint): void {
   target.push(...a, ...b, ...c);
 }
 
-function createRoads(mapData: RealMapData) {
+function createRoads(mapData: RealMapData): THREE.Mesh {
   const positions: number[] = [];
   for (const road of mapData.roads) {
     for (let index = 1; index < road.path.length; index += 1) {
@@ -26,10 +29,10 @@ function createRoads(mapData: RealMapData) {
       const halfWidth = Math.max(0.12, road.width * MAP_METERS_TO_WORLD * 0.5);
       const px = (-dz / length) * halfWidth;
       const pz = (dx / length) * halfWidth;
-      const a: [number, number, number] = [x0 + px, 0.025, z0 + pz];
-      const b: [number, number, number] = [x0 - px, 0.025, z0 - pz];
-      const c: [number, number, number] = [x1 - px, 0.025, z1 - pz];
-      const d: [number, number, number] = [x1 + px, 0.025, z1 + pz];
+      const a: TrianglePoint = [x0 + px, 0.025, z0 + pz];
+      const b: TrianglePoint = [x0 - px, 0.025, z0 - pz];
+      const c: TrianglePoint = [x1 - px, 0.025, z1 - pz];
+      const d: TrianglePoint = [x1 + px, 0.025, z1 + pz];
       // Wind road faces counter-clockwise when viewed from above so the
       // default front-side material is visible to the gameplay camera.
       pushTriangle(positions, a, c, b);
@@ -47,13 +50,13 @@ function createRoads(mapData: RealMapData) {
   return mesh;
 }
 
-function createBuildings(mapData: RealMapData) {
+function createBuildings(mapData: RealMapData): BuildingScene {
   const positions: number[] = [];
   const colors: number[] = [];
   const obstacles: MapPolygonObstacle[] = [];
   const baseColor = new THREE.Color();
 
-  const addVertexColor = (color: THREE.Color, vertexCount: number) => {
+  const addVertexColor = (color: THREE.Color, vertexCount: number): void => {
     for (let index = 0; index < vertexCount; index += 1) colors.push(color.r, color.g, color.b);
   };
 
@@ -113,7 +116,7 @@ function createBuildings(mapData: RealMapData) {
   return { mesh, obstacles };
 }
 
-function createCrossingMarkings(mapData: RealMapData) {
+function createCrossingMarkings(mapData: RealMapData): THREE.Group {
   const group = new THREE.Group();
   const landmark = mapData.landmarks[0];
   if (landmark) {
@@ -141,7 +144,7 @@ function createCrossingMarkings(mapData: RealMapData) {
   return group;
 }
 
-function createLandmarkBeacon(mapData: RealMapData) {
+function createLandmarkBeacon(mapData: RealMapData): THREE.Group {
   const group = new THREE.Group();
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(5.8, 6.05, 64),
@@ -163,7 +166,7 @@ function createLandmarkBeacon(mapData: RealMapData) {
   return group;
 }
 
-export function createRealMap(mapData: RealMapData) {
+export function createRealMap(mapData: RealMapData): RealMapScene {
   const group = new THREE.Group();
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(mapData.metadata.sizeMeters * MAP_METERS_TO_WORLD, mapData.metadata.sizeMeters * MAP_METERS_TO_WORLD),
@@ -177,7 +180,7 @@ export function createRealMap(mapData: RealMapData) {
   return { group, obstacles: buildings.obstacles };
 }
 
-export function pointInMapObstacle(x: number, z: number, obstacle: MapPolygonObstacle) {
+export function pointInMapObstacle(x: number, z: number, obstacle: MapPolygonObstacle): boolean {
   if (x < obstacle.minX || x > obstacle.maxX || z < obstacle.minZ || z > obstacle.maxZ) return false;
   let inside = false;
   for (let index = 0, previous = obstacle.points.length - 1; index < obstacle.points.length; previous = index, index += 1) {

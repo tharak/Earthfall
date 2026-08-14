@@ -21,7 +21,7 @@ export class GameInput {
     canvas.addEventListener("contextmenu", this.handleContextMenu);
   }
 
-  destroy() {
+  destroy(): void {
     window.removeEventListener("keydown", this.handleKeyDown);
     window.removeEventListener("keyup", this.handleKeyUp);
     this.canvas.removeEventListener("pointermove", this.handlePointerMove);
@@ -30,37 +30,37 @@ export class GameInput {
     this.canvas.removeEventListener("contextmenu", this.handleContextMenu);
   }
 
-  isPressed(code: string) {
+  isPressed(code: string): boolean {
     return this.keys.has(code);
   }
 
-  isFiring() {
+  isFiring(): boolean {
     return this.firing || this.keys.has("Space");
   }
 
-  private handleKeyDown = (event: KeyboardEvent) => {
+  private handleKeyDown = (event: KeyboardEvent): void => {
     this.keys.add(event.code);
     if (PREVENT_DEFAULT_KEYS.has(event.code)) event.preventDefault();
     if (event.code === "KeyR") this.onReload();
   };
 
-  private handleKeyUp = (event: KeyboardEvent) => {
+  private handleKeyUp = (event: KeyboardEvent): void => {
     this.keys.delete(event.code);
   };
 
-  private handlePointerMove = (event: PointerEvent) => {
+  private handlePointerMove = (event: PointerEvent): void => {
     this.cameraController.handlePointerMove(event);
   };
 
-  private handlePointerDown = (event: PointerEvent) => {
+  private handlePointerDown = (event: PointerEvent): void => {
     if (event.pointerType !== "touch" && event.button === 0) this.firing = true;
     this.cameraController.handlePointerDown(event);
   };
 
-  private handlePointerUp = (event: PointerEvent) => {
+  private handlePointerUp = (event: PointerEvent): void => {
     if (event.pointerType !== "touch" && event.button === 0) this.firing = false;
     this.cameraController.handlePointerUp(event);
   };
 
-  private handleContextMenu = (event: MouseEvent) => event.preventDefault();
+  private handleContextMenu = (event: MouseEvent): void => event.preventDefault();
 }
