@@ -61,12 +61,12 @@ const MiniMapBase = memo(function MiniMapBase({ mapData }: { mapData: RealMapDat
   );
 });
 
-export function MiniMap({ state, mapData }: { state: TacticalMapState; mapData: RealMapData }) {
+export function MiniMap({ state, mapData, locationName }: { state: TacticalMapState; mapData: RealMapData; locationName: string }) {
   const [playerX, playerY] = worldPoint(state.player.x, state.player.z);
 
   return (
-    <aside className="mini-map" aria-label="Tactical minimap">
-      <header><span>TACTICAL MAP</span><b>400 M</b></header>
+    <aside className="mini-map" aria-label={`${locationName} minimap`}>
+      <header><span>{locationName}</span><b>400 M</b></header>
       <svg viewBox="0 0 200 200" role="img" aria-label="Nearby streets, buildings, enemies, and objectives">
         <rect className="mini-map-background" width="200" height="200" />
         <MiniMapBase mapData={mapData} />

@@ -120,11 +120,6 @@ const EMPTY_HUD: MissionHud = {
   },
 };
 
-function formatTime(seconds: number) {
-  const minutes = Math.floor(seconds / 60);
-  return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
-}
-
 function EnemyTypeIcon({ type }: { type: "hunter" | "sentry" }) {
   return type === "hunter" ? (
     <svg viewBox="0 0 40 40" aria-hidden="true">
@@ -203,21 +198,6 @@ function MissionStage({
       <canvas ref={canvasRef} className="mission-canvas" aria-label={`Playable ${mission.city} extraction mission`} />
       <div className="mission-vignette" />
 
-      <header className="mission-topbar">
-        <div className="wordmark compact"><span>EARTHFALL</span><strong>PROTOCOL</strong></div>
-        <div className="mission-location"><span>ZONE 0{MISSIONS.findIndex((item) => item.id === mission.id) + 1}</span><strong>{mission.zone} · {mission.city}</strong></div>
-        <div className="mission-clock"><span>WINDOW</span><strong>{formatTime(hud.timeLeft)}</strong></div>
-      </header>
-
-      <aside className="objective-card">
-        <span className="eyebrow">PRIMARY DIRECTIVE</span>
-        <strong>DISMANTLE OR EXTRACT</strong>
-        <div className="objective-progress">
-          <i style={{ width: `${Math.min(100, (hud.kills / hud.requiredKills) * 100)}%` }} />
-        </div>
-        <small>{hud.kills} / {hud.requiredKills} TARGETS · 4 ACTIVE EXITS</small>
-      </aside>
-
       <div className="combat-message" data-visible={Boolean(hud.message)}>{hud.message || "SYSTEM NOMINAL"}</div>
 
       <aside className="health-panel">
@@ -237,18 +217,11 @@ function MissionStage({
         <small>LOST ON FAILURE</small>
       </aside>
 
-      <MiniMap state={hud.tacticalMap} mapData={MISSION_MAPS[mission.mapId]} />
+      <MiniMap state={hud.tacticalMap} mapData={MISSION_MAPS[mission.mapId]} locationName={mission.zone} />
 
       <a className="map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
         MAP DATA © OPENSTREETMAP CONTRIBUTORS · ODBL
       </a>
-
-      {hud.extractionUnlocked && (
-        <div className="extract-meter" data-active={hud.extractionProgress > 0}>
-          <span>HOLD E TO TRANSFER</span>
-          <div><i style={{ width: `${hud.extractionProgress * 100}%` }} /></div>
-        </div>
-      )}
 
       <div className="controls-hint"><kbd>WASD</kbd> MOVE <kbd>MOUSE</kbd> AIM <kbd>LMB</kbd> FIRE <kbd>RMB</kbd> CAMERA <kbd>R</kbd> RELOAD</div>
 
