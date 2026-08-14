@@ -120,6 +120,14 @@ const EMPTY_HUD: MissionHud = {
   },
 };
 
+function capturePointer(element: HTMLElement, pointerId: number) {
+  try {
+    element.setPointerCapture(pointerId);
+  } catch {
+    // Some browsers can invalidate a touch pointer before React handles it.
+  }
+}
+
 function EnemyTypeIcon({ type }: { type: "hunter" | "sentry" }) {
   return type === "hunter" ? (
     <svg viewBox="0 0 40 40" aria-hidden="true">
@@ -225,7 +233,7 @@ function MissionStage({
     if (event.pointerType === "mouse" || (event.target as HTMLElement).closest("button, a")) return;
     if (stickPointerRef.current.id !== null) return;
     stickPointerRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    capturePointer(event.currentTarget, event.pointerId);
     setStick({ active: true, x: event.clientX, y: event.clientY, dx: 0, dy: 0 });
   };
 
@@ -278,9 +286,9 @@ function MissionStage({
 
       <div className="touch-controls" aria-label="Touch controls">
         <div className="touch-actions">
-          <button onPointerDown={(event) => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); setTouch("reload", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("reload", false); }} onPointerCancel={() => setTouch("reload", false)}>RELOAD</button>
-          {hud.extractionUnlocked && <button className="extract" onPointerDown={(event) => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); setTouch("extract", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("extract", false); }} onPointerCancel={() => setTouch("extract", false)}>EXTRACT</button>}
-          <button className="fire" onPointerDown={(event) => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); setTouch("fire", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("fire", false); }} onPointerCancel={() => setTouch("fire", false)}>FIRE</button>
+          <button onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("reload", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("reload", false); }} onPointerCancel={() => setTouch("reload", false)}>RELOAD</button>
+          {hud.extractionUnlocked && <button className="extract" onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("extract", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("extract", false); }} onPointerCancel={() => setTouch("extract", false)}>EXTRACT</button>}
+          <button className="fire" onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("fire", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("fire", false); }} onPointerCancel={() => setTouch("fire", false)}>FIRE</button>
         </div>
       </div>
     </main>
