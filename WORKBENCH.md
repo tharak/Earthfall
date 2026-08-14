@@ -10,6 +10,7 @@ Loadout → city selection → mission deployment → fight and collect salvage 
 
 ## Validation
 
+- Compact salvage HUD inspected in Pixel 7 emulation (2026-08-14): the standalone unsecured panel is absent and the bottom action reads `EXTRACT 0`, using the live carried-salvage value.
 - Camera-relative movement inspected in Firefox/WebGL (2026-08-14): after orbiting the camera approximately 90 degrees, holding W moved the player along the rotated camera-forward axis on the tactical map instead of the fixed world Z axis.
 - Split aiming controls inspected in desktop and Pixel 7 touch emulation (2026-08-14): desktop pointer movement drives ground-plane aim; the floating stick drives movement and pawn heading on touch; firing continues along pawn facing; no automatic enemy targeting or browser console errors occurred.
 - `app/` code-quality refactor (2026-08-14): shared map/mission contracts now originate in `game-types.ts`; gameplay and search tuning moved to `game-config.ts`; transient Three.js effects moved out of the mission orchestrator into `entity-factories.ts`; and `page.tsx` was decomposed into focused mission, command, loadout, deployment, and debrief render sections without moving React flow ownership.

@@ -269,17 +269,11 @@ function MissionStage({
         <div className="touch-controls" aria-label="Touch controls">
           <div className="touch-actions">
             <button onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("reload", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("reload", false); }} onPointerCancel={() => setTouch("reload", false)}>RELOAD</button>
-            {hud.extractionUnlocked && <button className="extract" onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("extract", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("extract", false); }} onPointerCancel={() => setTouch("extract", false)}>EXTRACT</button>}
+            {hud.extractionUnlocked && <button className="extract" onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("extract", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("extract", false); }} onPointerCancel={() => setTouch("extract", false)}>EXTRACT {hud.salvage}</button>}
             <button className="fire" onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("fire", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("fire", false); }} onPointerCancel={() => setTouch("fire", false)}>FIRE</button>
           </div>
         </div>
       </div>
-
-      <aside className="salvage-panel">
-        <span>UNSECURED</span>
-        <strong>◈ {hud.salvage}</strong>
-        <small>LOST ON FAILURE</small>
-      </aside>
 
       <MiniMap state={hud.tacticalMap} mapData={MISSION_MAPS[mission.mapId]} locationName={mission.zone} />
 
