@@ -123,6 +123,7 @@ Show robots destroyed, unsecured salvage collected, parts recovered or lost, ext
 
 - Input-to-shot feedback must be immediate.
 - Hits use a short tracer, impact flash, robot color response, and light camera shake.
+- Pickup feedback rises from the recovered item's world position; extraction progress is communicated by the field ring and beam rather than a global status banner.
 - The player must be able to distinguish taking damage from dealing damage without reading numbers.
 - Reload state, ammunition, health, carried salvage, and extraction progress are always visible. Part recovery is announced immediately and summarized during debrief.
 - Obstacles block movement and create useful combat lanes.

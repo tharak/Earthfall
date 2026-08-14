@@ -106,7 +106,6 @@ export type MissionHud = {
   extractionUnlocked: boolean;
   extractionProgress: number;
   reloading: boolean;
-  message: string;
   tacticalMap: TacticalMapState;
 };
 

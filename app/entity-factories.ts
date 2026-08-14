@@ -7,6 +7,9 @@ import {
   PLAYER_HEIGHT_METERS,
   PLAYER_RADIUS_METERS,
   SKINS,
+  WORLD_LABEL_HEIGHT_METERS,
+  WORLD_LABEL_LIFETIME_SECONDS,
+  WORLD_LABEL_RISE_SPEED,
 } from "./game-config";
 import type {
   EnemyEntity,
@@ -147,6 +150,36 @@ export function createPartPickup(position: THREE.Vector3, partId: PartId): Picku
   mesh.position.x += 0.72;
   mesh.position.y = 0.72;
   return { mesh, payload: { kind: "part", partId }, baseY: 0.72, phase: Math.random() * Math.PI * 2 };
+}
+
+export function createWorldLabel(position: THREE.Vector3, text: string, color: number): TimedObject {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 96;
+  const context = canvas.getContext("2d");
+  if (context) {
+    context.font = "700 38px monospace";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.lineWidth = 9;
+    context.strokeStyle = "rgba(2, 10, 12, 0.9)";
+    context.strokeText(text, canvas.width / 2, canvas.height / 2);
+    context.fillStyle = `#${color.toString(16).padStart(6, "0")}`;
+    context.fillText(text, canvas.width / 2, canvas.height / 2);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+  sprite.position.copy(position);
+  sprite.position.y = WORLD_LABEL_HEIGHT_METERS;
+  sprite.scale.set(6.4, 1.2, 1);
+  sprite.renderOrder = 20;
+  return {
+    object: sprite,
+    life: WORLD_LABEL_LIFETIME_SECONDS,
+    maxLife: WORLD_LABEL_LIFETIME_SECONDS,
+    velocity: new THREE.Vector3(0, WORLD_LABEL_RISE_SPEED, 0),
+  };
 }
 
 export function createBurstFragments(position: THREE.Vector3, color: number): TimedObject[] {

@@ -6,9 +6,20 @@ import {
   ENEMIES,
   ENEMY_RESPAWN_DELAY_MS,
   ENEMY_STEERING_ANGLES,
+  EXTRACTION_ACTIVE_BEAM_OPACITY,
+  EXTRACTION_ACTIVE_BEAM_PULSE_OPACITY,
+  EXTRACTION_ACTIVE_PULSE_SCALE,
+  EXTRACTION_ACTIVE_PULSE_RATE,
+  EXTRACTION_ACTIVE_RING_SPEED,
+  EXTRACTION_BEAM_PROGRESS_OPACITY,
   EXTRACTION_POSITIONS,
   EXTRACTION_DURATION_SECONDS,
+  EXTRACTION_IDLE_BEAM_OPACITY,
+  EXTRACTION_IDLE_BEAM_PULSE_OPACITY,
+  EXTRACTION_IDLE_PULSE_RATE,
+  EXTRACTION_IDLE_RING_SPEED,
   EXTRACTION_PROGRESS_DECAY_PER_SECOND,
+  EXTRACTION_PROGRESS_SCALE,
   EXTRACTION_RADIUS_METERS,
   HUD_UPDATE_INTERVAL_SECONDS,
   INITIAL_ENEMY_SPAWNS,
@@ -44,6 +55,7 @@ import {
   createPlayer,
   createSalvagePickup,
   createTracer,
+  createWorldLabel,
 } from "./entity-factories";
 import { createMissionEnvironment } from "./mission-environment";
 import { GameInput } from "./game-input";
@@ -69,6 +81,12 @@ import type {
   TouchInput,
   WeaponId,
 } from "./game-types";
+
+function disposeMaterial(material: THREE.Material): void {
+  const texture = (material as THREE.Material & { map?: THREE.Texture | null }).map;
+  texture?.dispose();
+  material.dispose();
+}
 
 export class GameEngine {
   private readonly canvas: HTMLCanvasElement;
@@ -111,8 +129,6 @@ export class GameEngine {
   private reloadRemaining = 0;
   private extractionProgress = 0;
   private hudCooldown = 0;
-  private message = "Destroy the occupation machines";
-  private messageTime = 3.5;
   private cameraShake = 0;
   private enemyId = 0;
   private readonly partDropCounts: Record<EnemyKind, number> = { hunter: 0, sentry: 0 };
@@ -182,8 +198,8 @@ export class GameEngine {
       const mesh = object as THREE.Mesh;
       mesh.geometry?.dispose();
       const material = mesh.material;
-      if (Array.isArray(material)) material.forEach((item) => item.dispose());
-      else material?.dispose();
+      if (Array.isArray(material)) material.forEach(disposeMaterial);
+      else if (material) disposeMaterial(material);
     });
     this.renderer.dispose();
   }
@@ -220,8 +236,6 @@ export class GameEngine {
         if (Math.abs(x) > MISSION_RADIUS_METERS || Math.abs(z) > MISSION_RADIUS_METERS || this.isBlocked(x, z)) continue;
         if (this.enemies.some((enemy) => Math.hypot(enemy.group.position.x - x, enemy.group.position.z - z) < REPLACEMENT_MIN_ENEMY_DISTANCE_METERS)) continue;
         this.addEnemy(x, z, kind, seedAngle);
-        this.message = "Replacement signal detected";
-        this.messageTime = 1.2;
         return;
       }
     }
@@ -270,7 +284,6 @@ export class GameEngine {
     this.shotCooldown = Math.max(0, this.shotCooldown - dt);
     const wasReloading = this.reloadRemaining > 0;
     this.reloadRemaining = Math.max(0, this.reloadRemaining - dt);
-    this.messageTime = Math.max(0, this.messageTime - dt);
     this.cameraShake = Math.max(0, this.cameraShake - dt * 3.8);
     return wasReloading;
   }
@@ -278,8 +291,6 @@ export class GameEngine {
   private completeReloadIfReady(wasReloading: boolean): void {
     if (wasReloading && this.reloadRemaining === 0) {
       this.ammo = this.weapon.magazine;
-      this.message = "Magazine ready";
-      this.messageTime = 0.8;
     }
   }
 
@@ -397,12 +408,13 @@ export class GameEngine {
       if (distance < PICKUP_COLLECT_RADIUS_METERS) {
         if (pickup.payload.kind === "salvage") {
           this.salvage += pickup.payload.value;
-          this.message = `+${pickup.payload.value} unsecured salvage`;
+          this.showWorldLabel(pickup.mesh.position, `+${pickup.payload.value} SALVAGE`, 0x62ffb6);
         } else {
           this.recoveredParts.push(pickup.payload.partId);
-          this.message = `${MACHINE_PARTS[pickup.payload.partId].name} recovered`;
+          const part = MACHINE_PARTS[pickup.payload.partId];
+          const color = part.source === "hunter" ? ENEMIES.hunter.effectColor : ENEMIES.sentry.effectColor;
+          this.showWorldLabel(pickup.mesh.position, `+${part.name}`, color);
         }
-        this.messageTime = 1.1;
         this.scene.remove(pickup.mesh);
         pickup.mesh.geometry.dispose();
         (pickup.mesh.material as THREE.Material).dispose();
@@ -428,8 +440,8 @@ export class GameEngine {
         effect.object.traverse((child) => {
           const mesh = child as THREE.Mesh;
           mesh.geometry?.dispose();
-          if (Array.isArray(mesh.material)) mesh.material.forEach((material) => material.dispose());
-          else mesh.material?.dispose();
+          if (Array.isArray(mesh.material)) mesh.material.forEach(disposeMaterial);
+          else if (mesh.material) disposeMaterial(mesh.material);
         });
         this.timedObjects.splice(index, 1);
       }
@@ -438,25 +450,27 @@ export class GameEngine {
 
   private updateExtraction(dt: number): void {
     let nearestDistance = Number.POSITIVE_INFINITY;
+    const holding = this.input.isPressed("KeyE") || this.touch.extract;
     this.extractions.forEach((extraction) => {
-      extraction.ring.rotation.z += dt * 0.4;
+      const distance = this.player.position.distanceTo(extraction.group.position);
+      const active = holding && distance < EXTRACTION_RADIUS_METERS;
+      const pulse = active ? Math.sin(performance.now() * EXTRACTION_ACTIVE_PULSE_RATE) : 0;
+      const progressScale = active ? this.extractionProgress * EXTRACTION_PROGRESS_SCALE : 0;
+      extraction.ring.rotation.z += dt * (active ? EXTRACTION_ACTIVE_RING_SPEED : EXTRACTION_IDLE_RING_SPEED);
+      extraction.ring.scale.setScalar(1 + progressScale + pulse * (active ? EXTRACTION_ACTIVE_PULSE_SCALE : 0));
       const beamMaterial = extraction.beam.material as THREE.MeshBasicMaterial;
-      beamMaterial.opacity = 0.055 + Math.sin(performance.now() * 0.003) * 0.018;
-      nearestDistance = Math.min(nearestDistance, this.player.position.distanceTo(extraction.group.position));
+      beamMaterial.opacity = active
+        ? EXTRACTION_ACTIVE_BEAM_OPACITY + this.extractionProgress * EXTRACTION_BEAM_PROGRESS_OPACITY + pulse * EXTRACTION_ACTIVE_BEAM_PULSE_OPACITY
+        : EXTRACTION_IDLE_BEAM_OPACITY + Math.sin(performance.now() * EXTRACTION_IDLE_PULSE_RATE) * EXTRACTION_IDLE_BEAM_PULSE_OPACITY;
+      extraction.beam.scale.set(1 + progressScale, 1, 1 + progressScale);
+      nearestDistance = Math.min(nearestDistance, distance);
     });
 
-    const holding = this.input.isPressed("KeyE") || this.touch.extract;
     if (nearestDistance < EXTRACTION_RADIUS_METERS && holding) {
       this.extractionProgress = Math.min(1, this.extractionProgress + dt / EXTRACTION_DURATION_SECONDS);
-      this.message = "Transfer lock acquired";
-      this.messageTime = 0.2;
       if (this.extractionProgress >= 1) this.finish(true, "extracted");
     } else {
       this.extractionProgress = Math.max(0, this.extractionProgress - dt * EXTRACTION_PROGRESS_DECAY_PER_SECOND);
-      if (nearestDistance < EXTRACTION_RADIUS_METERS && this.messageTime <= 0) {
-        this.message = "Hold E to extract";
-        this.messageTime = 0.25;
-      }
     }
   }
 
@@ -499,10 +513,6 @@ export class GameEngine {
     this.cameraShake = this.weaponId === "arc" ? 0.22 : 0.12;
 
     if (target) this.damageEnemy(target, this.weapon.damage * this.stats.damageMultiplier);
-    if (this.ammo === 0) {
-      this.message = "Magazine empty — press R";
-      this.messageTime = 1.5;
-    }
   }
 
   private damageEnemy(enemy: EnemyEntity, damage: number): void {
@@ -528,16 +538,6 @@ export class GameEngine {
     const partId = enemyConfig.partDrops[dropIndex];
     this.spawnPartPickup(enemy.group.position, partId);
     this.spawnSalvagePickup(enemy.group.position, enemyConfig.salvageValue);
-    if (this.kills === REQUIRED_KILLS) {
-      this.message = "Objective complete — extract when ready";
-      this.messageTime = 3;
-    } else if (this.kills > REQUIRED_KILLS) {
-      this.message = "Machine destroyed — reinforcements inbound";
-      this.messageTime = 1.1;
-    } else {
-      this.message = `${REQUIRED_KILLS - this.kills} machines remain`;
-      this.messageTime = 1.1;
-    }
     const timer = window.setTimeout(() => {
       const timerIndex = this.respawnTimers.indexOf(timer);
       if (timerIndex >= 0) this.respawnTimers.splice(timerIndex, 1);
@@ -570,21 +570,23 @@ export class GameEngine {
     this.timedObjects.push(tracer);
   }
 
+  private showWorldLabel(position: THREE.Vector3, text: string, color: number): void {
+    const label = createWorldLabel(position, text, color);
+    this.scene.add(label.object);
+    this.timedObjects.push(label);
+  }
+
   private enemyShoot(enemy: EnemyEntity): void {
     const start = enemy.group.position.clone().add(new THREE.Vector3(0, 1.25, 0));
     const end = this.player.position.clone().add(new THREE.Vector3(0, 0.9, 0));
     this.createTracer(start, end, enemy.kind === "hunter" ? 0xff465d : 0xffb23e, 0.16);
     this.health = Math.max(0, this.health - enemy.attackDamage);
-    this.message = enemy.kind === "hunter" ? "Hunter fire detected" : "Sentry impact";
-    this.messageTime = 0.7;
     this.cameraShake = 0.32;
   }
 
   private startReload(): void {
     if (this.reloadRemaining > 0 || this.ammo === this.weapon.magazine) return;
     this.reloadRemaining = this.weapon.reloadTime * this.stats.reloadMultiplier;
-    this.message = "Reloading";
-    this.messageTime = this.reloadRemaining;
   }
 
   private isBlocked(x: number, z: number): boolean {
@@ -632,7 +634,6 @@ export class GameEngine {
       extractionUnlocked: true,
       extractionProgress: this.extractionProgress,
       reloading: this.reloadRemaining > 0,
-      message: this.messageTime > 0 ? this.message : "",
       tacticalMap: {
         player: { x: this.player.position.x, z: this.player.position.z, heading: this.player.rotation.y },
         enemies: this.enemies.map((enemy) => ({

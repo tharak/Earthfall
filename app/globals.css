@@ -302,8 +302,6 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .salvage-panel { position: absolute; padding: 13px 15px; border: 1px solid var(--line); background: rgba(4, 11, 13, 0.78); backdrop-filter: blur(8px); pointer-events: none; }
 .health-track { height: 4px; overflow: hidden; background: rgba(182, 219, 222, 0.12); }
 .health-track i { height: 100%; display: block; background: var(--cyan); box-shadow: 0 0 12px rgba(92, 231, 255, 0.52); transition: width 120ms linear; }
-.combat-message { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); padding: 8px 22px; border-top: 1px solid rgba(92, 231, 255, 0.36); border-bottom: 1px solid rgba(92, 231, 255, 0.36); background: rgba(6, 18, 20, 0.55); color: var(--cyan); font-family: var(--display); font-size: 13px; letter-spacing: 0.16em; opacity: 0; transition: opacity 150ms ease; pointer-events: none; }
-.combat-message[data-visible="true"] { opacity: 1; }
 .bottom-hud { display: contents; }
 .health-panel { width: 220px; left: 24px; bottom: 28px; }
 .health-copy { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 7px; }
@@ -454,7 +452,6 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
   .ammo-panel > strong { font-size: 32px; }
   .ammo-panel > strong small { font-size: 12px; }
   .ammo-panel > em { align-self: end; font-size: 5px; }
-  .combat-message { top: 154px; width: 74vw; text-align: center; }
   .desktop-extract { display: none; }
   .controls-hint { display: none; }
   .touch-controls { display: flex; align-items: stretch; }

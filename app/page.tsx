@@ -108,7 +108,6 @@ const EMPTY_HUD: MissionHud = {
   extractionUnlocked: true,
   extractionProgress: 0,
   reloading: false,
-  message: "",
   tacticalMap: {
     player: { x: PLAYER_START_POSITION[0], z: PLAYER_START_POSITION[1], heading: 0 },
     enemies: [],
@@ -255,8 +254,6 @@ function MissionStage({
     >
       <canvas ref={canvasRef} className="mission-canvas" aria-label={`Playable ${mission.city} extraction mission`} />
       <div className="mission-vignette" />
-
-      <div className="combat-message" data-visible={Boolean(hud.message)}>{hud.message || "SYSTEM NOMINAL"}</div>
 
       <div className="bottom-hud">
         <aside className="health-panel">
