@@ -1,7 +1,6 @@
 import * as THREE from "three";
-import type { RealMapData } from "./map-content";
-import { pointInMapObstacle, type MapPolygonObstacle } from "./real-map";
-import type { BoxObstacle } from "./game-types";
+import { pointInMapObstacle } from "./real-map";
+import type { BoxObstacle, MapPolygonObstacle, RealMapData } from "./game-types";
 import { EXTRACTION_POSITIONS } from "./game-config";
 
 type StreetPropKind = "car" | "barrier" | "crates" | "rubble" | "lamp";

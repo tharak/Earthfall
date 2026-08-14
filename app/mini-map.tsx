@@ -1,6 +1,5 @@
 import { memo } from "react";
-import type { TacticalMapState } from "./game-types";
-import type { RealMapData } from "./map-content";
+import type { RealMapData, TacticalMapState } from "./game-types";
 
 const VIEW_RADIUS_METERS = 200;
 const VIEW_SIZE = 200;

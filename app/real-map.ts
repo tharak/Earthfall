@@ -1,14 +1,6 @@
 import * as THREE from "three";
-import type { MapPoint as Point, RealMapData } from "./map-content";
+import type { MapPoint as Point, MapPolygonObstacle, RealMapData } from "./game-types";
 import gameScale from "./game-scale.json";
-
-export type MapPolygonObstacle = {
-  minX: number;
-  maxX: number;
-  minZ: number;
-  maxZ: number;
-  points: Point[];
-};
 
 // One Three.js world unit is one physical meter.
 export const MAP_METERS_TO_WORLD = 1 / gameScale.metersPerWorldUnit;

@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { GameEngine } from "./game-engine";
-import type { MissionHud, MissionResult, SkinId, TouchInput, WeaponId } from "./game-types";
+import type { MissionHud, MissionMapId, MissionResult, SkinId, TouchInput, WeaponId } from "./game-types";
 import { MiniMap } from "./mini-map";
-import { MISSION_MAPS, type MissionMapId } from "./map-content";
+import { MISSION_MAPS } from "./map-content";
 import { EXTRACTION_POSITIONS } from "./game-config";
 import { EarthGlobe } from "./earth-globe";
 

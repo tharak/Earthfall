@@ -1,11 +1,10 @@
 import * as THREE from "three";
 import { AUTHORED_LAYOUT_SCALE, MISSION_RADIUS_METERS } from "./game-config";
-import type { BoxObstacle } from "./game-types";
-import type { RealMapData } from "./map-content";
+import type { BoxObstacle, MissionEnvironment, RealMapData } from "./game-types";
 import { createRealMap } from "./real-map";
 import { createStreetObstacles } from "./street-obstacles";
 
-export function createMissionEnvironment(scene: THREE.Scene, mapData: RealMapData) {
+export function createMissionEnvironment(scene: THREE.Scene, mapData: RealMapData): MissionEnvironment {
   scene.add(
     new THREE.HemisphereLight(0xf1fbff, 0x667064, 2.4),
     new THREE.AmbientLight(0xb9d0d6, 1.15),

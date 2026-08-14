@@ -24,6 +24,47 @@ export type MissionDefinition = {
   longitude: number;
 };
 
+export type MapBuilding = {
+  id: number;
+  name?: string;
+  kind: string;
+  height: number;
+  footprint: MapPoint[];
+};
+
+export type MapRoad = {
+  id: number;
+  name?: string;
+  kind: string;
+  width: number;
+  path: MapPoint[];
+};
+
+export type MapLandmark = {
+  id: number;
+  name: string;
+  kind: "cathedral" | "crossing";
+  footprint: MapPoint[];
+};
+
+export type RealMapData = {
+  metadata: {
+    id: string;
+    title: string;
+    center: { lat: number; lon: number };
+    centerLandmark: string;
+    landmarkKind: "cathedral" | "crossing";
+    sizeMeters: number;
+    source: string;
+    sourceUrl: string;
+    license: string;
+    generatedAt: string;
+  };
+  buildings: MapBuilding[];
+  roads: MapRoad[];
+  landmarks: MapLandmark[];
+};
+
 export type TacticalMapPlayer = WorldPoint & { heading: number };
 export type TacticalMapEnemy = WorldPoint & { id: number; kind: EnemyKind };
 
@@ -130,6 +171,10 @@ export type BoxObstacle = {
   maxZ: number;
 };
 
+export type MapPolygonObstacle = BoxObstacle & {
+  points: MapPoint[];
+};
+
 export type PlayerEntity = {
   group: THREE.Group;
   body: THREE.Mesh;
@@ -137,7 +182,7 @@ export type PlayerEntity = {
 };
 
 export type MissionEnvironment = {
-  mapObstacles: Array<BoxObstacle & { points: MapPoint[] }>;
+  mapObstacles: MapPolygonObstacle[];
   obstacles: BoxObstacle[];
 };
 

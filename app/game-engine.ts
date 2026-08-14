@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { pointInMapObstacle, type MapPolygonObstacle } from "./real-map";
-import { MISSION_MAPS, type MissionMapId, type RealMapData } from "./map-content";
+import { pointInMapObstacle } from "./real-map";
+import { MISSION_MAPS } from "./map-content";
 import {
   AUTHORED_LAYOUT_SCALE,
   ENEMIES,
@@ -49,8 +49,11 @@ import type {
   ExtractionEntity,
   MissionEndListener,
   MissionHudListener,
+  MissionMapId,
   MissionResult,
+  MapPolygonObstacle,
   PickupEntity,
+  RealMapData,
   SkinId,
   TimedObject,
   TouchInput,
