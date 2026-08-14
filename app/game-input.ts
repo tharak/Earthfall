@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import type { OrbitCameraController } from "./orbit-camera";
 
 const PREVENT_DEFAULT_KEYS = new Set([
@@ -6,7 +5,6 @@ const PREVENT_DEFAULT_KEYS = new Set([
 ]);
 
 export class GameInput {
-  readonly pointer = new THREE.Vector2(0.2, 0);
   private readonly keys = new Set<string>();
   private firing = false;
 
@@ -51,10 +49,7 @@ export class GameInput {
   };
 
   private handlePointerMove = (event: PointerEvent) => {
-    if (this.cameraController.handlePointerMove(event)) return;
-    const rect = this.canvas.getBoundingClientRect();
-    this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    this.cameraController.handlePointerMove(event);
   };
 
   private handlePointerDown = (event: PointerEvent) => {

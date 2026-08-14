@@ -41,8 +41,6 @@ export class GameEngine {
   private readonly playerAccent: THREE.Mesh;
   private readonly cameraController: OrbitCameraController;
   private readonly input: GameInput;
-  private readonly raycaster = new THREE.Raycaster();
-  private readonly aimPoint = new THREE.Vector3(0, 0, -8);
   private readonly enemies: EnemyEntity[] = [];
   private readonly pickups: PickupEntity[] = [];
   private readonly timedObjects: TimedObject[] = [];
@@ -229,7 +227,6 @@ export class GameEngine {
     }
 
     if (this.touch.reload) this.startReload();
-    this.updateAim();
     this.updatePlayer(dt);
     this.updateEnemies(dt);
     this.updatePickups(dt);
@@ -251,18 +248,6 @@ export class GameEngine {
     else if (this.timeLeft <= 0) this.finish(false, "timeout");
   }
 
-  private updateAim() {
-    if (this.touch.fire) {
-      const target = this.findNearestEnemy();
-      if (target) this.aimPoint.copy(target.group.position);
-      return;
-    }
-    this.raycaster.setFromCamera(this.input.pointer, this.camera);
-    const ray = this.raycaster.ray;
-    const distance = -ray.origin.y / ray.direction.y;
-    if (distance > 0) this.aimPoint.copy(ray.origin).addScaledVector(ray.direction, distance);
-  }
-
   private updatePlayer(dt: number) {
     const move = new THREE.Vector3();
     if (this.input.isPressed("KeyW") || this.input.isPressed("ArrowUp") || this.touch.up) move.z -= 1;
@@ -270,16 +255,14 @@ export class GameEngine {
     if (this.input.isPressed("KeyA") || this.input.isPressed("ArrowLeft") || this.touch.left) move.x -= 1;
     if (this.input.isPressed("KeyD") || this.input.isPressed("ArrowRight") || this.touch.right) move.x += 1;
     if (move.lengthSq() > 0) {
-      move.normalize().multiplyScalar(5.3 * dt);
+      move.normalize();
+      this.player.rotation.y = Math.atan2(-move.x, -move.z);
       const previous = this.player.position.clone();
-      this.player.position.add(move);
+      this.player.position.addScaledVector(move, 5.3 * dt);
       this.player.position.x = THREE.MathUtils.clamp(this.player.position.x, -MISSION_RADIUS_METERS, MISSION_RADIUS_METERS);
       this.player.position.z = THREE.MathUtils.clamp(this.player.position.z, -MISSION_RADIUS_METERS, MISSION_RADIUS_METERS);
       if (this.isBlocked(this.player.position.x, this.player.position.z)) this.player.position.copy(previous);
     }
-    const dx = this.aimPoint.x - this.player.position.x;
-    const dz = this.aimPoint.z - this.player.position.z;
-    if (Math.abs(dx) + Math.abs(dz) > 0.01) this.player.rotation.y = Math.atan2(-dx, -dz);
   }
 
   private updateEnemies(dt: number) {
@@ -417,7 +400,7 @@ export class GameEngine {
     }, 55);
 
     const origin = this.player.position.clone().add(new THREE.Vector3(0, 1.15, 0));
-    const direction = this.aimPoint.clone().sub(this.player.position).setY(0).normalize();
+    const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(this.player.quaternion).setY(0).normalize();
     const maxDistance = 24;
     let target: EnemyEntity | null = null;
     let targetDistance = maxDistance;
@@ -540,19 +523,6 @@ export class GameEngine {
     this.reloadRemaining = this.weapon.reloadTime;
     this.message = "Reloading";
     this.messageTime = this.weapon.reloadTime;
-  }
-
-  private findNearestEnemy() {
-    let nearest: EnemyEntity | null = null;
-    let distance = Number.POSITIVE_INFINITY;
-    this.enemies.forEach((enemy) => {
-      const nextDistance = enemy.group.position.distanceTo(this.player.position);
-      if (nextDistance < distance) {
-        nearest = enemy;
-        distance = nextDistance;
-      }
-    });
-    return nearest;
   }
 
   private isBlocked(x: number, z: number) {

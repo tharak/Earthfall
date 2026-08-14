@@ -236,7 +236,7 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .mission-unavailable section { width: min(560px, 100%); padding: 38px; border: 1px solid rgba(255, 64, 89, 0.34); background: rgba(8, 15, 18, 0.9); text-align: center; }
 .mission-unavailable h1 { margin: 12px 0; font-family: var(--display); font-size: clamp(40px, 7vw, 68px); }
 .mission-unavailable p { margin: 0 auto 24px; color: var(--muted); font-size: 10px; line-height: 1.7; }
-.mission-canvas { width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+.mission-canvas { width: 100%; height: 100%; display: block; cursor: default; touch-action: none; }
 .mission-vignette { position: absolute; inset: 0; pointer-events: none; box-shadow: 0 0 80px 12px rgba(2, 12, 16, 0.24) inset; background: linear-gradient(0deg, rgba(6, 16, 18, 0.2), transparent 23%, transparent 80%, rgba(238, 249, 250, 0.08)), repeating-linear-gradient(0deg, transparent 0 4px, rgba(20, 74, 82, 0.022) 5px); }
 .health-panel,
 .ammo-panel,

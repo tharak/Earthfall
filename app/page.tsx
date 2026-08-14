@@ -288,7 +288,7 @@ function MissionStage({
         MAP DATA © OPENSTREETMAP CONTRIBUTORS · ODBL
       </a>
 
-      <div className="controls-hint"><kbd>WASD</kbd> MOVE <kbd>MOUSE</kbd> AIM <kbd>LMB</kbd> FIRE <kbd>RMB</kbd> CAMERA <kbd>R</kbd> RELOAD</div>
+      <div className="controls-hint"><kbd>WASD</kbd> MOVE / AIM <kbd>LMB</kbd> FIRE <kbd>RMB</kbd> CAMERA <kbd>R</kbd> RELOAD</div>
 
       <div className="touch-stick" data-active={stick.active} style={{ left: stick.x, top: stick.y }} aria-hidden="true">
         <i style={{ transform: `translate(${stick.dx}px, ${stick.dy}px)` }} />
