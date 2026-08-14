@@ -10,6 +10,7 @@ Loadout assembly → city selection → mission deployment → fight and collect
 
 ## Validation
 
+- Equipped-player assembly inspected in Firefox/WebGL at 1280 × 720 and 412 × 915 (2026-08-14): the live original EF-MK01 model mirrors its selected head, arms, core, and legs; a mixed Hunter/Sentry build visibly combines visor fins, a heavy cannon shoulder, bulwark armor, and pursuit actuators while preserving the gameplay camera, HUD, facing, and collision behavior with zero browser errors.
 - Interactive mecha loadout inspected in Firefox at 1280 × 720 and 412 × 915 (2026-08-14): the original EF-MK01 humanoid schematic exposes clickable and keyboard-focusable head, arms, core, and legs regions; selecting the torso switches the compatible inventory panel and highlight; both loadout and deployment layouts fit without internal or horizontal scrolling.
 - Contextual mission feedback inspected in Firefox/WebGL at 1280 × 720 (2026-08-14): the global top message is absent; salvage collection renders `+35 SALVAGE` above the pickup position; holding extraction visibly accelerates and enlarges the ring while brightening/expanding its beam; and the browser reports zero console errors.
 - Modular machine-parts flow inspected in Firefox at 1280 × 720 and 412 × 915 (2026-08-14): head, arms, core, and legs tabs expose owned and enemy-locked options; the loadout and deployment dialogs fit without internal or horizontal scrolling; Pulse Arms deploy with a 24-round magazine; and an owned Sentry Bulwark raises both the assembly summary and mission health to 125 with no browser console errors.
@@ -44,6 +45,7 @@ Full successful and failed combat runs still need an independent local playtest.
 
 ## Decision log
 
+- The deployed EF-MK01 is assembled by `entity-factories.ts` from the same four equipped part IDs owned by React mission flow. Frame finishes color shared armor, recovered factions color their slot accents, and the player entity contract remains limited to the root, core hit mesh, and weapon muzzle used by the mission orchestrator.
 - The assembly UI uses an original EF-MK01 angular humanoid-mecha silhouette and Earthfall markings rather than reproducing a licensed robot design. Equipment regions on the machine replace the former row of slot tabs.
 - Mission feedback stays local to its source: pickups use short-lived world labels, extraction uses field animation, reload uses the ammo panel, and incoming fire uses tracers, health loss, and camera shake. The global combat-message banner has been removed.
 - The modular machine system uses original Earthfall terminology and designs: one head, arms, core, and legs part may be equipped at a time. Issued parts form a complete starter build; hostile parts are earned through collection and successful extraction, never paid acquisition.

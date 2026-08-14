@@ -83,6 +83,8 @@ The player's machine is assembled from four functional slots. Each slot accepts 
 
 The loadout interface presents the complete humanoid machine as an interactive technical schematic. Selecting its head, arm assembly, torso core, or legs opens the compatible owned and recoverable parts for that physical region.
 
+The deployed player model mirrors the equipped assembly. Each slot has its own low-poly geometry, silhouette, and issued/Hunter/Sentry accent treatment, while the selected frame finish colors the shared armor shell. These visual substitutions do not alter the player's collision footprint, facing axis, or combat timing.
+
 | Slot | Function | Prototype examples |
 | --- | --- | --- |
 | Head | Targeting and weapon range | Scout optic, Hunter visor, Sentry array |
@@ -221,7 +223,8 @@ Credits are banked only on extraction and may unlock utility equipment and non-p
 
 ### Prototype geometry language
 
-- Players and standard enemies: capsules.
+- Player: an original low-poly humanoid mecha assembled from head, arms, core, and legs regions.
+- Standard enemies: capsules with box armor and distinct sensors.
 - Armor and sensors: boxes.
 - Cover, buildings, vehicles: cubes and rectangular prisms.
 - Salvage and mission beacons: spheres and rings.
@@ -237,7 +240,7 @@ Color does system work:
 
 ### Replacement-ready rendering
 
-Gameplay code refers to semantic entities and events, not mesh children. A renderer maps `Player`, `Enemy`, `Pickup`, `Obstacle`, and `ExtractionZone` state to Three.js objects. Replacing a capsule with a rigged model must not change combat rules.
+Gameplay code refers to semantic entities and events, not mesh children. A renderer maps `Player`, `Enemy`, `Pickup`, `Obstacle`, and `ExtractionZone` state to Three.js objects. Replacing the low-poly player assembly with a rigged model must not change combat rules.
 
 ### Audio
 

@@ -5,7 +5,6 @@ import {
   ENEMY_PHASE_COOLDOWN_SECONDS,
   MACHINE_PARTS,
   PLAYER_HEIGHT_METERS,
-  PLAYER_RADIUS_METERS,
   SKINS,
   WORLD_LABEL_HEIGHT_METERS,
   WORLD_LABEL_LIFETIME_SECONDS,
@@ -15,6 +14,7 @@ import type {
   EnemyEntity,
   EnemyKind,
   ExtractionEntity,
+  MachineLoadout,
   PickupEntity,
   PartId,
   PlayerEntity,
@@ -22,28 +22,140 @@ import type {
   TimedObject,
 } from "./game-types";
 
-export function createPlayer(skinId: SkinId): PlayerEntity {
-  const group = new THREE.Group();
-  const skin = SKINS[skinId];
-  const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(
-      PLAYER_RADIUS_METERS,
-      PLAYER_HEIGHT_METERS - PLAYER_RADIUS_METERS * 2,
-      5,
-      10,
-    ),
-    new THREE.MeshStandardMaterial({ color: skin.body, roughness: 0.52, metalness: 0.28 }),
-  );
-  body.position.y = PLAYER_HEIGHT_METERS / 2;
-  body.castShadow = true;
-  group.add(body);
+type PlayerMaterials = {
+  armor: THREE.MeshStandardMaterial;
+  frame: THREE.MeshStandardMaterial;
+  issued: THREE.MeshStandardMaterial;
+  hunter: THREE.MeshStandardMaterial;
+  sentry: THREE.MeshStandardMaterial;
+};
 
-  const accent = new THREE.Mesh(
-    new THREE.BoxGeometry(0.28, 0.18, 0.62),
-    new THREE.MeshStandardMaterial({ color: skin.accent, emissive: skin.accent, emissiveIntensity: 1.6 }),
+function createPlayerMaterials(skinId: SkinId): PlayerMaterials {
+  const skin = SKINS[skinId];
+  return {
+    armor: new THREE.MeshStandardMaterial({ color: skin.body, roughness: 0.4, metalness: 0.68 }),
+    frame: new THREE.MeshStandardMaterial({ color: 0x10191d, roughness: 0.5, metalness: 0.75 }),
+    issued: new THREE.MeshStandardMaterial({ color: skin.accent, emissive: skin.accent, emissiveIntensity: 1.15 }),
+    hunter: new THREE.MeshStandardMaterial({ color: 0xff465d, emissive: 0x7b101f, emissiveIntensity: 1.25 }),
+    sentry: new THREE.MeshStandardMaterial({ color: 0xffb23e, emissive: 0x70400c, emissiveIntensity: 1.2 }),
+  };
+}
+
+function addPlayerMesh(
+  parent: THREE.Object3D,
+  geometry: THREE.BufferGeometry,
+  material: THREE.Material,
+  position: readonly [number, number, number],
+  rotation: readonly [number, number, number] = [0, 0, 0],
+): THREE.Mesh {
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(...position);
+  mesh.rotation.set(...rotation);
+  mesh.castShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+
+function getPartMaterial(partId: PartId, materials: PlayerMaterials): THREE.MeshStandardMaterial {
+  return materials[MACHINE_PARTS[partId].source];
+}
+
+function createPlayerLegs(group: THREE.Group, partId: MachineLoadout["legs"], materials: PlayerMaterials): void {
+  const accent = getPartMaterial(partId, materials);
+  const isHunter = partId === "hunter-legs";
+  for (const side of [-1, 1]) {
+    const x = side * 0.2;
+    addPlayerMesh(group, new THREE.BoxGeometry(0.22, 0.42, 0.24), materials.armor, [x, 0.66, 0], [0, 0, isHunter ? side * -0.12 : 0]);
+    addPlayerMesh(group, new THREE.BoxGeometry(0.17, 0.34, 0.19), materials.frame, [x + (isHunter ? side * 0.035 : 0), 0.3, isHunter ? 0.06 : 0]);
+    addPlayerMesh(group, new THREE.BoxGeometry(0.25, 0.12, isHunter ? 0.36 : 0.3), materials.armor, [x, 0.08, -0.055]);
+    addPlayerMesh(group, new THREE.BoxGeometry(0.07, 0.22, 0.035), accent, [x, 0.43, -0.13]);
+  }
+}
+
+function createPlayerCore(
+  group: THREE.Group,
+  partId: MachineLoadout["core"],
+  materials: PlayerMaterials,
+): THREE.Mesh {
+  const isSentry = partId === "sentry-core";
+  const body = addPlayerMesh(
+    group,
+    new THREE.BoxGeometry(isSentry ? 0.7 : 0.58, 0.48, isSentry ? 0.42 : 0.34),
+    materials.armor,
+    [0, 1.08, 0],
   );
-  accent.position.set(0, 1.15, -0.5);
-  group.add(accent);
+  addPlayerMesh(group, new THREE.BoxGeometry(isSentry ? 0.32 : 0.24, 0.22, 0.05), getPartMaterial(partId, materials), [0, 1.1, -0.2]);
+  addPlayerMesh(group, new THREE.BoxGeometry(0.34, 0.12, 0.28), materials.frame, [0, 0.81, 0]);
+  if (isSentry) {
+    addPlayerMesh(group, new THREE.BoxGeometry(0.18, 0.38, 0.46), materials.armor, [-0.38, 1.08, 0.015], [0, 0, -0.12]);
+    addPlayerMesh(group, new THREE.BoxGeometry(0.18, 0.38, 0.46), materials.armor, [0.38, 1.08, 0.015], [0, 0, 0.12]);
+  }
+  return body;
+}
+
+function createPlayerHead(group: THREE.Group, partId: MachineLoadout["head"], materials: PlayerMaterials): void {
+  const accent = getPartMaterial(partId, materials);
+  if (partId === "sentry-array") {
+    addPlayerMesh(group, new THREE.BoxGeometry(0.42, 0.25, 0.31), materials.armor, [0, 1.57, 0]);
+    for (const x of [-0.13, 0, 0.13]) {
+      addPlayerMesh(group, new THREE.SphereGeometry(0.045, 8, 5), accent, [x, 1.58, -0.175]);
+    }
+    addPlayerMesh(group, new THREE.BoxGeometry(0.035, 0.28, 0.035), accent, [0.15, 1.79, 0]);
+    return;
+  }
+
+  const isHunter = partId === "hunter-optic";
+  addPlayerMesh(group, new THREE.BoxGeometry(isHunter ? 0.36 : 0.32, 0.27, 0.3), materials.armor, [0, 1.58, 0], [isHunter ? -0.12 : 0, 0, 0]);
+  addPlayerMesh(group, new THREE.BoxGeometry(isHunter ? 0.3 : 0.22, 0.06, 0.035), accent, [0, 1.61, -0.17]);
+  if (isHunter) {
+    addPlayerMesh(group, new THREE.ConeGeometry(0.08, 0.28, 4), materials.armor, [-0.21, 1.63, 0], [0, 0, 0.22]);
+    addPlayerMesh(group, new THREE.ConeGeometry(0.08, 0.28, 4), materials.armor, [0.21, 1.63, 0], [0, 0, -0.22]);
+  }
+}
+
+function createPlayerArms(
+  group: THREE.Group,
+  partId: MachineLoadout["arms"],
+  materials: PlayerMaterials,
+): THREE.Mesh {
+  const accentMaterial = getPartMaterial(partId, materials);
+  const isHeavy = partId === "sentry-arms";
+  const isHunter = partId === "hunter-arms";
+  for (const side of [-1, 1]) {
+    const shoulderX = side * (isHeavy ? 0.47 : 0.41);
+    addPlayerMesh(
+      group,
+      isHunter ? new THREE.ConeGeometry(0.18, 0.38, 4) : new THREE.BoxGeometry(isHeavy ? 0.3 : 0.24, 0.25, 0.32),
+      materials.armor,
+      [shoulderX, 1.28, 0],
+      isHunter ? [0, 0, side * -0.28] : [0, 0, side * (isHeavy ? 0.08 : 0.14)],
+    );
+    addPlayerMesh(group, new THREE.BoxGeometry(isHeavy ? 0.22 : 0.16, 0.38, 0.18), materials.frame, [side * 0.43, 1.0, -0.015]);
+    if (partId === "pulse-arms" || isHunter) {
+      addPlayerMesh(group, new THREE.CylinderGeometry(0.045, 0.055, isHunter ? 0.48 : 0.36, 8), accentMaterial, [side * 0.43, 1.03, -0.29], [Math.PI / 2, 0, 0]);
+    }
+  }
+
+  if (isHeavy) {
+    addPlayerMesh(group, new THREE.BoxGeometry(0.25, 0.2, 0.58), materials.armor, [0.45, 1.25, -0.24]);
+  }
+  const muzzle = addPlayerMesh(
+    group,
+    new THREE.BoxGeometry(isHeavy ? 0.13 : 0.1, isHeavy ? 0.13 : 0.09, isHeavy ? 0.5 : 0.34),
+    accentMaterial,
+    [isHeavy ? 0.45 : 0, isHeavy ? 1.25 : 1.08, isHeavy ? -0.68 : -0.38],
+  );
+  return muzzle;
+}
+
+export function createPlayer(loadout: MachineLoadout, skinId: SkinId): PlayerEntity {
+  const group = new THREE.Group();
+  const materials = createPlayerMaterials(skinId);
+  createPlayerLegs(group, loadout.legs, materials);
+  const body = createPlayerCore(group, loadout.core, materials);
+  createPlayerHead(group, loadout.head, materials);
+  const accent = createPlayerArms(group, loadout.arms, materials);
+  group.scale.setScalar(PLAYER_HEIGHT_METERS / 1.8);
   return { group, body, accent };
 }
 

@@ -168,7 +168,7 @@ export class GameEngine {
     this.input = new GameInput(this.canvas, this.cameraController, this.touch, () => this.startReload());
     window.addEventListener("resize", this.resize);
 
-    const player = createPlayer(skinId);
+    const player = createPlayer(loadout, skinId);
     this.player = player.group;
     this.playerBody = player.body;
     this.playerAccent = player.accent;
