@@ -58,12 +58,12 @@ export class GameInput {
   };
 
   private handlePointerDown = (event: PointerEvent) => {
-    if (event.button === 0) this.firing = true;
+    if (event.pointerType !== "touch" && event.button === 0) this.firing = true;
     this.cameraController.handlePointerDown(event);
   };
 
   private handlePointerUp = (event: PointerEvent) => {
-    if (event.button === 0) this.firing = false;
+    if (event.pointerType !== "touch" && event.button === 0) this.firing = false;
     this.cameraController.handlePointerUp(event);
   };
 

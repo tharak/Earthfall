@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { GameEngine } from "./game-engine";
 import type { MissionHud, MissionResult, SkinId, TouchInput, WeaponId } from "./game-types";
 import { MiniMap } from "./mini-map";
@@ -160,6 +160,8 @@ function MissionStage({
   });
   const [hud, setHud] = useState<MissionHud>(EMPTY_HUD);
   const [webglUnavailable, setWebglUnavailable] = useState(false);
+  const stickPointerRef = useRef<{ id: number | null; x: number; y: number }>({ id: null, x: 0, y: 0 });
+  const [stick, setStick] = useState({ active: false, x: 0, y: 0, dx: 0, dy: 0 });
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -193,8 +195,53 @@ function MissionStage({
     touchRef.current[key] = value;
   };
 
+  const updateStick = (clientX: number, clientY: number) => {
+    const origin = stickPointerRef.current;
+    const rawX = clientX - origin.x;
+    const rawY = clientY - origin.y;
+    const distance = Math.hypot(rawX, rawY);
+    const scale = distance > 42 ? 42 / distance : 1;
+    const dx = rawX * scale;
+    const dy = rawY * scale;
+    const threshold = 11;
+    touchRef.current.left = dx < -threshold;
+    touchRef.current.right = dx > threshold;
+    touchRef.current.up = dy < -threshold;
+    touchRef.current.down = dy > threshold;
+    setStick({ active: true, x: origin.x, y: origin.y, dx, dy });
+  };
+
+  const releaseStick = (pointerId: number) => {
+    if (stickPointerRef.current.id !== pointerId) return;
+    stickPointerRef.current.id = null;
+    touchRef.current.up = false;
+    touchRef.current.down = false;
+    touchRef.current.left = false;
+    touchRef.current.right = false;
+    setStick((current) => ({ ...current, active: false, dx: 0, dy: 0 }));
+  };
+
+  const onTouchStart = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.pointerType === "mouse" || (event.target as HTMLElement).closest("button, a")) return;
+    if (stickPointerRef.current.id !== null) return;
+    stickPointerRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setStick({ active: true, x: event.clientX, y: event.clientY, dx: 0, dy: 0 });
+  };
+
+  const onTouchMove = (event: ReactPointerEvent<HTMLElement>) => {
+    if (stickPointerRef.current.id !== event.pointerId) return;
+    updateStick(event.clientX, event.clientY);
+  };
+
   return (
-    <main className="mission-shell">
+    <main
+      className="mission-shell"
+      onPointerDown={onTouchStart}
+      onPointerMove={onTouchMove}
+      onPointerUp={(event) => releaseStick(event.pointerId)}
+      onPointerCancel={(event) => releaseStick(event.pointerId)}
+    >
       <canvas ref={canvasRef} className="mission-canvas" aria-label={`Playable ${mission.city} extraction mission`} />
       <div className="mission-vignette" />
 
@@ -225,17 +272,15 @@ function MissionStage({
 
       <div className="controls-hint"><kbd>WASD</kbd> MOVE <kbd>MOUSE</kbd> AIM <kbd>LMB</kbd> FIRE <kbd>RMB</kbd> CAMERA <kbd>R</kbd> RELOAD</div>
 
+      <div className="touch-stick" data-active={stick.active} style={{ left: stick.x, top: stick.y }} aria-hidden="true">
+        <i style={{ transform: `translate(${stick.dx}px, ${stick.dy}px)` }} />
+      </div>
+
       <div className="touch-controls" aria-label="Touch controls">
-        <div className="touch-dpad">
-          <button aria-label="Move up" onPointerDown={() => setTouch("up", true)} onPointerUp={() => setTouch("up", false)}>▲</button>
-          <button aria-label="Move left" onPointerDown={() => setTouch("left", true)} onPointerUp={() => setTouch("left", false)}>◀</button>
-          <button aria-label="Move right" onPointerDown={() => setTouch("right", true)} onPointerUp={() => setTouch("right", false)}>▶</button>
-          <button aria-label="Move down" onPointerDown={() => setTouch("down", true)} onPointerUp={() => setTouch("down", false)}>▼</button>
-        </div>
         <div className="touch-actions">
-          <button onPointerDown={() => setTouch("reload", true)} onPointerUp={() => setTouch("reload", false)}>RELOAD</button>
-          {hud.extractionUnlocked && <button className="extract" onPointerDown={() => setTouch("extract", true)} onPointerUp={() => setTouch("extract", false)}>EXTRACT</button>}
-          <button className="fire" onPointerDown={() => setTouch("fire", true)} onPointerUp={() => setTouch("fire", false)}>FIRE</button>
+          <button onPointerDown={(event) => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); setTouch("reload", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("reload", false); }} onPointerCancel={() => setTouch("reload", false)}>RELOAD</button>
+          {hud.extractionUnlocked && <button className="extract" onPointerDown={(event) => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); setTouch("extract", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("extract", false); }} onPointerCancel={() => setTouch("extract", false)}>EXTRACT</button>}
+          <button className="fire" onPointerDown={(event) => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); setTouch("fire", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("fire", false); }} onPointerCancel={() => setTouch("fire", false)}>FIRE</button>
         </div>
       </div>
     </main>

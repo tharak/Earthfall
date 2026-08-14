@@ -231,7 +231,7 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .deployment-actions { display: grid; grid-template-columns: 0.45fr 1fr; gap: 10px; }
 .deployment-actions > button:first-child { border: 1px solid var(--line-strong); background: transparent; color: var(--muted); cursor: pointer; }
 
-.mission-shell { width: 100vw; height: 100vh; position: relative; overflow: hidden; background: #a8d2df; user-select: none; }
+.mission-shell { width: 100vw; height: 100vh; position: relative; overflow: hidden; background: #a8d2df; user-select: none; touch-action: none; }
 .mission-unavailable { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at center, rgba(255, 64, 89, 0.1), transparent 38%), #05090b; }
 .mission-unavailable section { width: min(560px, 100%); padding: 38px; border: 1px solid rgba(255, 64, 89, 0.34); background: rgba(8, 15, 18, 0.9); text-align: center; }
 .mission-unavailable h1 { margin: 12px 0; font-family: var(--display); font-size: clamp(40px, 7vw, 68px); }
@@ -285,7 +285,15 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .mini-map-contacts .player { fill: #eaffff; stroke: var(--cyan); stroke-width: 0.7; filter: drop-shadow(0 0 2px var(--cyan)); }
 .controls-hint { position: absolute; left: 50%; bottom: 27px; transform: translateX(-50%); color: rgba(191, 211, 212, 0.5); font-size: 7px; letter-spacing: 0.07em; pointer-events: none; white-space: nowrap; }
 .controls-hint kbd { padding: 3px 5px; border: 1px solid rgba(191, 211, 212, 0.25); background: rgba(0, 0, 0, 0.25); color: rgba(228, 241, 240, 0.75); font-family: var(--mono); font-size: 7px; }
-.touch-controls { display: none; }
+.touch-stick { width: 82px; height: 82px; position: absolute; z-index: 12; display: grid; place-items: center; border: 1px solid rgba(92, 231, 255, 0.48); border-radius: 50%; background: rgba(3, 14, 17, 0.38); box-shadow: 0 0 26px rgba(92, 231, 255, 0.08) inset; opacity: 0; transform: translate(-50%, -50%); transition: opacity 100ms ease; pointer-events: none; }
+.touch-stick[data-active="true"] { opacity: 1; }
+.touch-stick::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: rgba(92, 231, 255, 0.45); }
+.touch-stick i { width: 34px; height: 34px; position: absolute; border: 1px solid var(--cyan); border-radius: 50%; background: rgba(10, 42, 48, 0.86); box-shadow: 0 0 16px rgba(92, 231, 255, 0.28); }
+.touch-controls { position: absolute; z-index: 13; left: 12px; right: 12px; bottom: 12px; display: none; justify-content: flex-end; align-items: end; pointer-events: none; }
+.touch-actions { display: grid; grid-template-columns: auto auto; gap: 6px; pointer-events: auto; }
+.touch-actions button { min-width: 64px; min-height: 32px; padding: 6px 8px; border: 1px solid rgba(151, 212, 217, 0.28); background: rgba(4, 13, 15, 0.66); color: rgba(221, 241, 241, 0.72); font-size: 7px; letter-spacing: 0.08em; touch-action: none; }
+.touch-actions .fire { width: 76px; height: 76px; grid-row: 1 / 3; grid-column: 2; border-color: var(--cyan); border-radius: 50%; color: var(--cyan); background: rgba(8, 42, 48, 0.72); box-shadow: 0 0 22px rgba(92, 231, 255, 0.12) inset; }
+.touch-actions .extract { color: var(--green); border-color: var(--green); }
 
 .debrief-shell { min-height: 100vh; position: relative; display: grid; place-items: center; overflow: hidden; padding: 24px; background: radial-gradient(circle at 50% 40%, rgba(98, 255, 182, 0.12), transparent 32%), #05090b; }
 .debrief-shell.failure { background: radial-gradient(circle at 50% 40%, rgba(255, 64, 89, 0.12), transparent 32%), #05090b; }
@@ -363,23 +371,14 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
   .ammo-panel { width: 154px; right: 12px; }
   .combat-message { top: 154px; width: 74vw; text-align: center; }
   .controls-hint { display: none; }
-  .touch-controls { position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; justify-content: space-between; align-items: end; pointer-events: none; }
-  .touch-dpad,
-  .touch-actions { pointer-events: auto; }
-  .touch-dpad { width: 116px; height: 96px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); }
-  .touch-dpad button,
-  .touch-actions button { border: 1px solid rgba(151, 212, 217, 0.28); background: rgba(4, 13, 15, 0.66); color: rgba(221, 241, 241, 0.72); touch-action: none; }
-  .touch-dpad button:nth-child(1) { grid-column: 2; grid-row: 1; }
-  .touch-dpad button:nth-child(2) { grid-column: 1; grid-row: 2; }
-  .touch-dpad button:nth-child(3) { grid-column: 3; grid-row: 2; }
-  .touch-dpad button:nth-child(4) { grid-column: 2; grid-row: 3; }
-  .touch-actions { display: grid; grid-template-columns: auto auto; gap: 6px; }
-  .touch-actions button { min-width: 64px; min-height: 32px; padding: 6px 8px; font-size: 7px; letter-spacing: 0.08em; }
-  .touch-actions .fire { width: 70px; height: 70px; grid-row: 1 / 3; grid-column: 2; border-color: var(--cyan); border-radius: 50%; color: var(--cyan); }
-  .touch-actions .extract { color: var(--green); border-color: var(--green); }
+  .touch-controls { display: flex; }
   .debrief-card { padding: 28px 18px; }
   .debrief-stats { grid-template-columns: 1fr; }
   .debrief-stats div { min-height: 62px; border-right: 0; border-bottom: 1px solid var(--line); }
+}
+
+@media (pointer: coarse) {
+  .touch-controls { display: flex; }
 }
 
 @media (prefers-reduced-motion: reduce) {
