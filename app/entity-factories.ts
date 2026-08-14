@@ -1,8 +1,23 @@
 import * as THREE from "three";
-import { PLAYER_HEIGHT_METERS, PLAYER_RADIUS_METERS, SKINS } from "./game-config";
-import type { EnemyEntity, EnemyKind, ExtractionEntity, SkinId } from "./game-types";
+import {
+  ENEMIES,
+  ENEMY_INITIAL_COOLDOWN_SECONDS,
+  ENEMY_PHASE_COOLDOWN_SECONDS,
+  PLAYER_HEIGHT_METERS,
+  PLAYER_RADIUS_METERS,
+  SKINS,
+} from "./game-config";
+import type {
+  EnemyEntity,
+  EnemyKind,
+  ExtractionEntity,
+  PickupEntity,
+  PlayerEntity,
+  SkinId,
+  TimedObject,
+} from "./game-types";
 
-export function createPlayer(skinId: SkinId) {
+export function createPlayer(skinId: SkinId): PlayerEntity {
   const group = new THREE.Group();
   const skin = SKINS[skinId];
   const body = new THREE.Mesh(
@@ -45,6 +60,7 @@ export function createExtractionPoint(): ExtractionEntity {
 }
 
 export function createEnemy(id: number, x: number, z: number, kind: EnemyKind, phase: number): EnemyEntity {
+  const config = ENEMIES[kind];
   const group = new THREE.Group();
   const bodyColor = kind === "hunter" ? 0x252b30 : 0x3b3026;
   const sensorColor = kind === "hunter" ? 0xff3f55 : 0xffb53f;
@@ -78,13 +94,60 @@ export function createEnemy(id: number, x: number, z: number, kind: EnemyKind, p
     group,
     body,
     sensor,
-    health: kind === "hunter" ? 80 : 110,
-    speed: kind === "hunter" ? 2.1 : 1.25,
-    attackRange: kind === "hunter" ? 7.2 : 10.5,
-    attackDamage: kind === "hunter" ? 7 : 11,
-    attackDelay: kind === "hunter" ? 1.05 : 1.65,
-    cooldown: 0.7 + phase * 0.15,
+    health: config.health,
+    speed: config.speed,
+    attackRange: config.attackRange,
+    attackDamage: config.attackDamage,
+    attackDelay: config.attackDelay,
+    cooldown: ENEMY_INITIAL_COOLDOWN_SECONDS + phase * ENEMY_PHASE_COOLDOWN_SECONDS,
     flash: 0,
     patrolAngle: phase,
   };
+}
+
+export function createCombatHit(color: number): THREE.Mesh {
+  return new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 8, 6),
+    new THREE.MeshBasicMaterial({ color, transparent: true }),
+  );
+}
+
+export function createSalvagePickup(position: THREE.Vector3, value: number): PickupEntity {
+  const mesh = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(0.34, 1),
+    new THREE.MeshStandardMaterial({
+      color: 0x63ffb2,
+      emissive: 0x20a76c,
+      emissiveIntensity: 1.6,
+      roughness: 0.2,
+      metalness: 0.5,
+    }),
+  );
+  mesh.position.copy(position);
+  mesh.position.y = 0.62;
+  return { mesh, value, baseY: 0.62, phase: Math.random() * Math.PI * 2 };
+}
+
+export function createBurstFragments(position: THREE.Vector3, color: number): TimedObject[] {
+  const fragments: TimedObject[] = [];
+  for (let index = 0; index < 8; index += 1) {
+    const fragment = new THREE.Mesh(
+      new THREE.BoxGeometry(0.18 + Math.random() * 0.22, 0.18 + Math.random() * 0.22, 0.18 + Math.random() * 0.22),
+      new THREE.MeshBasicMaterial({ color, transparent: true }),
+    );
+    fragment.position.copy(position).add(new THREE.Vector3(0, 0.8, 0));
+    fragments.push({
+      object: fragment,
+      life: 0.7,
+      maxLife: 0.7,
+      velocity: new THREE.Vector3((Math.random() - 0.5) * 5, Math.random() * 3, (Math.random() - 0.5) * 5),
+    });
+  }
+  return fragments;
+}
+
+export function createTracer(start: THREE.Vector3, end: THREE.Vector3, color: number, life: number): TimedObject {
+  const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+  const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 1 });
+  return { object: new THREE.Line(geometry, material), life, maxLife: life };
 }
