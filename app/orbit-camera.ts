@@ -5,6 +5,7 @@ const DRAG_RADIANS_PER_PIXEL = 0.006;
 const MIN_PITCH = 0.34;
 const MAX_PITCH = 1.08;
 const FOCUS_HEIGHT_METERS = 0.9;
+const WORLD_UP = new THREE.Vector3(0, 1, 0);
 
 export class OrbitCameraController {
   private dragging = false;
@@ -50,6 +51,10 @@ export class OrbitCameraController {
     this.dragging = false;
     if (this.canvas.hasPointerCapture?.(event.pointerId)) this.canvas.releasePointerCapture(event.pointerId);
     return true;
+  }
+
+  alignDirectionToView(direction: THREE.Vector3): THREE.Vector3 {
+    return direction.applyAxisAngle(WORLD_UP, this.yaw);
   }
 
   update(dt: number, focus: THREE.Vector3, shake: number): void {

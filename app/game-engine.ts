@@ -295,7 +295,10 @@ export class GameEngine {
   private updateAim(): void {
     if (this.touch.aimWithStick) {
       if (this.touch.aimX !== 0 || this.touch.aimZ !== 0) {
-        this.player.rotation.y = Math.atan2(-this.touch.aimX, -this.touch.aimZ);
+        const aimDirection = this.cameraController.alignDirectionToView(
+          new THREE.Vector3(this.touch.aimX, 0, this.touch.aimZ),
+        );
+        this.player.rotation.y = Math.atan2(-aimDirection.x, -aimDirection.z);
       }
       return;
     }
@@ -317,6 +320,7 @@ export class GameEngine {
     if (this.input.isPressed("KeyD") || this.input.isPressed("ArrowRight") || this.touch.right) move.x += 1;
     if (move.lengthSq() > 0) {
       move.normalize();
+      this.cameraController.alignDirectionToView(move);
       const previous = this.player.position.clone();
       this.player.position.addScaledVector(move, PLAYER_MOVE_SPEED * dt);
       this.player.position.x = THREE.MathUtils.clamp(this.player.position.x, -MISSION_RADIUS_METERS, MISSION_RADIUS_METERS);

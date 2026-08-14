@@ -10,6 +10,7 @@ Loadout → city selection → mission deployment → fight and collect salvage 
 
 ## Validation
 
+- Camera-relative movement inspected in Firefox/WebGL (2026-08-14): after orbiting the camera approximately 90 degrees, holding W moved the player along the rotated camera-forward axis on the tactical map instead of the fixed world Z axis.
 - Split aiming controls inspected in desktop and Pixel 7 touch emulation (2026-08-14): desktop pointer movement drives ground-plane aim; the floating stick drives movement and pawn heading on touch; firing continues along pawn facing; no automatic enemy targeting or browser console errors occurred.
 - `app/` code-quality refactor (2026-08-14): shared map/mission contracts now originate in `game-types.ts`; gameplay and search tuning moved to `game-config.ts`; transient Three.js effects moved out of the mission orchestrator into `entity-factories.ts`; and `page.tsx` was decomposed into focused mission, command, loadout, deployment, and debrief render sections without moving React flow ownership.
 - Strict TypeScript checking now covers Three.js through `@types/three`; the game client passes `tsc --noEmit`. Cloudflare ambient types remain a separate worker/database follow-up.
@@ -37,6 +38,7 @@ Full successful and failed combat runs still need an independent local playtest.
 
 ## Decision log
 
+- WASD, arrow-key, and touch-stick movement are camera-relative; orbiting the camera rotates both movement input and touch-stick aim by the same yaw so controls remain visually aligned.
 - Aim input is device-specific: desktop uses the mouse ground position, touch uses the floating movement-stick vector, and hybrid devices follow the most recently used aim device. Shots always use pawn facing; enemy auto-aim remains disabled.
 - The 2026-08-14 full-repository quality pass completed `app/` first and stopped at the documented scope boundary; `worker/`, `db/`, `scripts/`, `prototype/`, and `tests/` remain for a focused follow-up rather than receiving a superficial mixed-concern refactor.
 - Game-client dependencies continue to point toward shared types/config and focused helpers. No helper imports `GameEngine`; the orchestrator no longer constructs meshes.
