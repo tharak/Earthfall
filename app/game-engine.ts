@@ -5,16 +5,22 @@ import {
   AUTHORED_LAYOUT_SCALE,
   ENEMIES,
   ENEMY_RESPAWN_DELAY_MS,
+  ENEMY_STEERING_ANGLES,
   EXTRACTION_POSITIONS,
   EXTRACTION_DURATION_SECONDS,
   EXTRACTION_PROGRESS_DECAY_PER_SECOND,
   EXTRACTION_RADIUS_METERS,
   HUD_UPDATE_INTERVAL_SECONDS,
   INITIAL_ENEMY_SPAWNS,
+  INITIAL_ENEMY_PHASE_STEP,
   LINE_OF_SIGHT_SAMPLE_SPACING_METERS,
   MAX_FRAME_DELTA_SECONDS,
   MISSION_RADIUS_METERS,
   MISSION_SECONDS,
+  OPEN_POSITION_SEARCH_LIMIT_METERS,
+  OPEN_POSITION_SEARCH_SAMPLES,
+  OPEN_POSITION_SEARCH_START_METERS,
+  OPEN_POSITION_SEARCH_STEP_METERS,
   PICKUP_COLLECT_RADIUS_METERS,
   PLAYER_MAX_HEALTH,
   PLAYER_MOVE_SPEED,
@@ -182,7 +188,7 @@ export class GameEngine {
   private spawnEnemies(): void {
     INITIAL_ENEMY_SPAWNS.forEach(([x, z, kind], index) => {
       const position = this.findOpenPosition(x * AUTHORED_LAYOUT_SCALE, z * AUTHORED_LAYOUT_SCALE);
-      this.addEnemy(position.x, position.z, kind, index * 0.61);
+      this.addEnemy(position.x, position.z, kind, index * INITIAL_ENEMY_PHASE_STEP);
     });
   }
 
@@ -337,8 +343,7 @@ export class GameEngine {
   }
 
   private moveEnemyWithAvoidance(enemy: EnemyEntity, desiredDirection: THREE.Vector3, distance: number): void {
-    const steeringAngles = [0, Math.PI / 6, -Math.PI / 6, Math.PI / 3, -Math.PI / 3, Math.PI / 2, -Math.PI / 2];
-    for (const angle of steeringAngles) {
+    for (const angle of ENEMY_STEERING_ANGLES) {
       const direction = desiredDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
       const nextX = enemy.group.position.x + direction.x * distance;
       const nextZ = enemy.group.position.z + direction.z * distance;
@@ -541,10 +546,9 @@ export class GameEngine {
 
   private findOpenPosition(x: number, z: number): THREE.Vector3 {
     if (!this.isBlocked(x, z)) return new THREE.Vector3(x, 0, z);
-    for (let radius = 2; radius <= 40; radius += 2) {
-      const samples = 32;
-      for (let sample = 0; sample < samples; sample += 1) {
-        const angle = (sample / samples) * Math.PI * 2;
+    for (let radius = OPEN_POSITION_SEARCH_START_METERS; radius <= OPEN_POSITION_SEARCH_LIMIT_METERS; radius += OPEN_POSITION_SEARCH_STEP_METERS) {
+      for (let sample = 0; sample < OPEN_POSITION_SEARCH_SAMPLES; sample += 1) {
+        const angle = (sample / OPEN_POSITION_SEARCH_SAMPLES) * Math.PI * 2;
         const candidateX = x + Math.cos(angle) * radius;
         const candidateZ = z + Math.sin(angle) * radius;
         if (Math.abs(candidateX) <= MISSION_RADIUS_METERS && Math.abs(candidateZ) <= MISSION_RADIUS_METERS && !this.isBlocked(candidateX, candidateZ)) {

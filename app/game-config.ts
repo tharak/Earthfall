@@ -81,11 +81,19 @@ export const EXTRACTION_PROGRESS_DECAY_PER_SECOND = 0.75;
 export const LINE_OF_SIGHT_SAMPLE_SPACING_METERS = 3;
 export const ENEMY_INITIAL_COOLDOWN_SECONDS = 0.7;
 export const ENEMY_PHASE_COOLDOWN_SECONDS = 0.15;
+export const ENEMY_STEERING_ANGLES = [0, Math.PI / 6, -Math.PI / 6, Math.PI / 3, -Math.PI / 3, Math.PI / 2, -Math.PI / 2] as const;
+export const SENTRY_STRAFE_TIME_FACTOR = 0.0008;
+export const SENTRY_STRAFE_STRENGTH = 0.45;
+export const INITIAL_ENEMY_PHASE_STEP = 0.61;
 export const REPLACEMENT_SPAWN_RADII = [42, 52, 62] as const;
 export const REPLACEMENT_SPAWN_SAMPLES = 16;
 export const REPLACEMENT_MIN_ENEMY_DISTANCE_METERS = 6;
 export const REPLACEMENT_FALLBACK_OFFSET_METERS = 40;
 export const REPLACEMENT_ANGLE_STEP_RADIANS = 2.399963;
+export const OPEN_POSITION_SEARCH_START_METERS = 2;
+export const OPEN_POSITION_SEARCH_LIMIT_METERS = 40;
+export const OPEN_POSITION_SEARCH_STEP_METERS = 2;
+export const OPEN_POSITION_SEARCH_SAMPLES = 32;
 export const INITIAL_ENEMY_SPAWNS: ReadonlyArray<readonly [number, number, EnemyKind]> = [
   [-13, -11, "hunter"],
   [-6, -15, "sentry"],
