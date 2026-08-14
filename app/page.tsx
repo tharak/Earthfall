@@ -350,12 +350,10 @@ export default function Home() {
         </div>
 
         <aside className="zone-selection" aria-live="polite">
-          <div className="zone-status"><i data-status={mission.status} /><span>{mission.status}</span><small>{mission.coordinates}</small></div>
-          <span className="section-tag">SELECTED DROP ZONE</span>
+          <div className="zone-status"><i data-status={mission.status} /><small>{mission.coordinates}</small></div>
           <h2>{mission.zone}</h2>
           <p>{mission.city} · {mission.country}</p>
           <div className="enemy-types">
-            <span className="enemy-label">ENEMY SIGNALS</span>
             <div>
               {mission.enemyTypes.map((type) => (
                 <span className={`enemy-type ${type}`} key={type} title={type === "hunter" ? "Hunter" : "Sentry"}>

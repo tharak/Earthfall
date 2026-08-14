@@ -116,14 +116,14 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .earth-caption strong { font-family: var(--display); font-size: 32px; color: var(--red); }
 
 .zone-selection { width: min(370px, calc(100% - 48px)); position: absolute; z-index: 10; top: 50%; right: 28px; padding: 28px; border: 1px solid rgba(166, 217, 223, 0.24); border-left-color: var(--line-strong); background: linear-gradient(115deg, rgba(10, 25, 29, 0.94), rgba(4, 12, 15, 0.82)); box-shadow: 0 22px 70px rgba(0, 0, 0, 0.4); backdrop-filter: blur(16px); transform: translateY(-48%); }
-.zone-status { display: grid; grid-template-columns: 8px auto 1fr; align-items: center; gap: 8px; margin-bottom: 38px; }
+.zone-status { display: grid; grid-template-columns: 8px 1fr; align-items: center; gap: 8px; margin-bottom: 26px; }
 .zone-status i { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px currentColor; }
 .zone-status i[data-status="SCANNING"] { background: #5a7073; }
 .zone-status span { color: var(--green); font-size: 8px; letter-spacing: 0.18em; }
 .zone-status small { justify-self: end; color: #647a7d; font-size: 7px; }
-.zone-selection h2 { margin: 10px 0 4px; font-family: var(--display); font-size: clamp(42px, 4.8vw, 70px); font-weight: 500; letter-spacing: -0.015em; line-height: 0.86; }
+.zone-selection h2 { margin: 0 0 4px; font-family: var(--display); font-size: clamp(42px, 4.8vw, 70px); font-weight: 500; letter-spacing: -0.015em; line-height: 0.86; }
 .zone-selection > p { margin: 12px 0 30px; color: var(--cyan); font-family: var(--display); font-size: 15px; letter-spacing: 0.13em; }
-.enemy-types { margin-bottom: 28px; padding: 17px 0 19px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.enemy-types { margin-bottom: 28px; padding: 13px 0 19px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .enemy-label { display: block; margin-bottom: 13px; color: var(--muted); font-size: 7px; letter-spacing: 0.2em; }
 .enemy-types > div { display: flex; gap: 10px; }
 .enemy-type { min-width: 104px; display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid rgba(255, 64, 89, 0.24); background: rgba(255, 64, 89, 0.04); }
@@ -329,7 +329,7 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
   .rotate-hint { bottom: 2%; }
   .zone-selection { width: calc(100% - 24px); max-width: none; top: auto; right: 12px; bottom: 10px; padding: 14px 16px 15px; transform: none; }
   .zone-status { margin-bottom: 11px; }
-  .zone-selection h2 { margin-top: 6px; font-size: clamp(34px, 10.5vw, 44px); }
+  .zone-selection h2 { font-size: clamp(34px, 10.5vw, 44px); }
   .zone-selection > p { margin: 7px 0 12px; font-size: 13px; }
   .enemy-types { margin-bottom: 11px; padding: 9px 0 10px; }
   .enemy-label { margin-bottom: 7px; }
