@@ -14,6 +14,7 @@ import {
   INITIAL_ENEMY_SPAWNS,
   INITIAL_ENEMY_PHASE_STEP,
   LINE_OF_SIGHT_SAMPLE_SPACING_METERS,
+  MACHINE_PARTS,
   MAX_FRAME_DELTA_SECONDS,
   MISSION_RADIUS_METERS,
   MISSION_SECONDS,
@@ -22,8 +23,6 @@ import {
   OPEN_POSITION_SEARCH_START_METERS,
   OPEN_POSITION_SEARCH_STEP_METERS,
   PICKUP_COLLECT_RADIUS_METERS,
-  PLAYER_MAX_HEALTH,
-  PLAYER_MOVE_SPEED,
   PLAYER_START_POSITION,
   REPLACEMENT_ANGLE_STEP_RADIANS,
   REPLACEMENT_FALLBACK_OFFSET_METERS,
@@ -33,6 +32,7 @@ import {
   REQUIRED_KILLS,
   WEAPON_RANGE_METERS,
   WEAPONS,
+  getMachineStats,
 } from "./game-config";
 import { RuleBasedEnemyController } from "./enemy-controller";
 import {
@@ -40,6 +40,7 @@ import {
   createCombatHit,
   createEnemy,
   createExtractionPoint,
+  createPartPickup,
   createPlayer,
   createSalvagePickup,
   createTracer,
@@ -57,8 +58,11 @@ import type {
   MissionHudListener,
   MissionMapId,
   MissionResult,
+  MachineLoadout,
+  MachineStats,
   MapPolygonObstacle,
   PickupEntity,
+  PartId,
   RealMapData,
   SkinId,
   TimedObject,
@@ -88,6 +92,7 @@ export class GameEngine {
   private readonly mapData: RealMapData;
   private readonly weaponId: WeaponId;
   private readonly weapon: (typeof WEAPONS)[WeaponId];
+  private readonly stats: MachineStats;
   private readonly onHud: MissionHudListener;
   private readonly onEnd: MissionEndListener;
   private readonly extractions: ExtractionEntity[] = [];
@@ -96,10 +101,11 @@ export class GameEngine {
 
   private animationFrame = 0;
   private ended = false;
-  private health = PLAYER_MAX_HEALTH;
+  private health = 0;
   private ammo = 0;
   private kills = 0;
   private salvage = 0;
+  private readonly recoveredParts: PartId[] = [];
   private timeLeft = MISSION_SECONDS;
   private shotCooldown = 0;
   private reloadRemaining = 0;
@@ -109,11 +115,12 @@ export class GameEngine {
   private messageTime = 3.5;
   private cameraShake = 0;
   private enemyId = 0;
+  private readonly partDropCounts: Record<EnemyKind, number> = { hunter: 0, sentry: 0 };
 
   constructor(
     canvas: HTMLCanvasElement,
     mapId: MissionMapId,
-    weaponId: WeaponId,
+    loadout: MachineLoadout,
     skinId: SkinId,
     touch: TouchInput,
     onHud: MissionHudListener,
@@ -121,8 +128,11 @@ export class GameEngine {
   ) {
     this.canvas = canvas;
     this.mapData = MISSION_MAPS[mapId];
-    this.weaponId = weaponId;
-    this.weapon = WEAPONS[weaponId];
+    const arms = MACHINE_PARTS[loadout.arms];
+    this.weaponId = arms.weaponId ?? "arc";
+    this.weapon = WEAPONS[this.weaponId];
+    this.stats = getMachineStats(loadout);
+    this.health = this.stats.maxHealth;
     this.ammo = this.weapon.magazine;
     this.touch = touch;
     this.onHud = onHud;
@@ -322,7 +332,7 @@ export class GameEngine {
       move.normalize();
       this.cameraController.alignDirectionToView(move);
       const previous = this.player.position.clone();
-      this.player.position.addScaledVector(move, PLAYER_MOVE_SPEED * dt);
+      this.player.position.addScaledVector(move, this.stats.moveSpeed * dt);
       this.player.position.x = THREE.MathUtils.clamp(this.player.position.x, -MISSION_RADIUS_METERS, MISSION_RADIUS_METERS);
       this.player.position.z = THREE.MathUtils.clamp(this.player.position.z, -MISSION_RADIUS_METERS, MISSION_RADIUS_METERS);
       if (this.isBlocked(this.player.position.x, this.player.position.z)) this.player.position.copy(previous);
@@ -385,8 +395,13 @@ export class GameEngine {
       pickup.mesh.position.y = pickup.baseY + Math.sin(pickup.phase) * 0.2;
       const distance = pickup.mesh.position.distanceTo(this.player.position);
       if (distance < PICKUP_COLLECT_RADIUS_METERS) {
-        this.salvage += pickup.value;
-        this.message = `+${pickup.value} unsecured salvage`;
+        if (pickup.payload.kind === "salvage") {
+          this.salvage += pickup.payload.value;
+          this.message = `+${pickup.payload.value} unsecured salvage`;
+        } else {
+          this.recoveredParts.push(pickup.payload.partId);
+          this.message = `${MACHINE_PARTS[pickup.payload.partId].name} recovered`;
+        }
         this.messageTime = 1.1;
         this.scene.remove(pickup.mesh);
         pickup.mesh.geometry.dispose();
@@ -464,7 +479,7 @@ export class GameEngine {
 
     const origin = this.player.position.clone().add(new THREE.Vector3(0, 1.15, 0));
     const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(this.player.quaternion).setY(0).normalize();
-    const maxDistance = WEAPON_RANGE_METERS;
+    const maxDistance = WEAPON_RANGE_METERS * this.stats.rangeMultiplier;
     let target: EnemyEntity | null = null;
     let targetDistance = maxDistance;
     this.enemies.forEach((enemy) => {
@@ -483,7 +498,7 @@ export class GameEngine {
     this.createTracer(origin, end, this.weapon.color, 0.12);
     this.cameraShake = this.weaponId === "arc" ? 0.22 : 0.12;
 
-    if (target) this.damageEnemy(target, this.weapon.damage);
+    if (target) this.damageEnemy(target, this.weapon.damage * this.stats.damageMultiplier);
     if (this.ammo === 0) {
       this.message = "Magazine empty — press R";
       this.messageTime = 1.5;
@@ -508,7 +523,11 @@ export class GameEngine {
     this.kills += 1;
     const enemyConfig = ENEMIES[enemy.kind];
     this.createBurst(enemy.group.position, enemyConfig.effectColor);
-    this.spawnPickup(enemy.group.position, enemyConfig.salvageValue);
+    const dropIndex = this.partDropCounts[enemy.kind] % enemyConfig.partDrops.length;
+    this.partDropCounts[enemy.kind] += 1;
+    const partId = enemyConfig.partDrops[dropIndex];
+    this.spawnPartPickup(enemy.group.position, partId);
+    this.spawnSalvagePickup(enemy.group.position, enemyConfig.salvageValue);
     if (this.kills === REQUIRED_KILLS) {
       this.message = "Objective complete — extract when ready";
       this.messageTime = 3;
@@ -527,8 +546,14 @@ export class GameEngine {
     this.respawnTimers.push(timer);
   }
 
-  private spawnPickup(position: THREE.Vector3, value: number): void {
+  private spawnSalvagePickup(position: THREE.Vector3, value: number): void {
     const pickup = createSalvagePickup(position, value);
+    this.scene.add(pickup.mesh);
+    this.pickups.push(pickup);
+  }
+
+  private spawnPartPickup(position: THREE.Vector3, partId: PartId): void {
+    const pickup = createPartPickup(position, partId);
     this.scene.add(pickup.mesh);
     this.pickups.push(pickup);
   }
@@ -557,9 +582,9 @@ export class GameEngine {
 
   private startReload(): void {
     if (this.reloadRemaining > 0 || this.ammo === this.weapon.magazine) return;
-    this.reloadRemaining = this.weapon.reloadTime;
+    this.reloadRemaining = this.weapon.reloadTime * this.stats.reloadMultiplier;
     this.message = "Reloading";
-    this.messageTime = this.weapon.reloadTime;
+    this.messageTime = this.reloadRemaining;
   }
 
   private isBlocked(x: number, z: number): boolean {
@@ -596,11 +621,13 @@ export class GameEngine {
   private emitHud(): void {
     this.onHud({
       health: Math.ceil(this.health),
+      maxHealth: this.stats.maxHealth,
       ammo: this.ammo,
       magazine: this.weapon.magazine,
       kills: this.kills,
       requiredKills: REQUIRED_KILLS,
       salvage: this.salvage,
+      parts: [...this.recoveredParts],
       timeLeft: Math.max(0, Math.ceil(this.timeLeft)),
       extractionUnlocked: true,
       extractionProgress: this.extractionProgress,
@@ -628,6 +655,6 @@ export class GameEngine {
     this.ended = true;
     this.emitHud();
     this.renderer.render(this.scene, this.camera);
-    window.setTimeout(() => this.onEnd({ success, kills: this.kills, salvage: this.salvage, reason }), 420);
+    window.setTimeout(() => this.onEnd({ success, kills: this.kills, salvage: this.salvage, parts: [...this.recoveredParts], reason }), 420);
   }
 }

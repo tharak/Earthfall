@@ -6,10 +6,12 @@ Prototype v0.1 — real-world Praça da Sé and Shibuya Crossing maps implemente
 
 ## Target flow
 
-Loadout → city selection → mission deployment → fight and collect salvage for as long as desired → use any active extraction point → bank credits → debrief.
+Loadout assembly → city selection → mission deployment → fight and collect salvage and enemy parts for as long as desired → use any active extraction point → bank credits and parts → rebuild → debrief.
 
 ## Validation
 
+- Modular machine-parts flow inspected in Firefox at 1280 × 720 and 412 × 915 (2026-08-14): head, arms, core, and legs tabs expose owned and enemy-locked options; the loadout and deployment dialogs fit without internal or horizontal scrolling; Pulse Arms deploy with a 24-round magazine; and an owned Sentry Bulwark raises both the assembly summary and mission health to 125 with no browser console errors.
+- Part recovery implementation (2026-08-14): Hunter and Sentry kills deterministically rotate through distinct faction part pools, part pickups remain unsecured during the mission, successful extraction persists part counts, failure discards them, and debrief lists parts secured or lost.
 - Desktop extraction action inspected in Firefox at 1280 × 720 (2026-08-14): `EXTRACT 0` is visible at the center of the bottom HUD without overlapping vitals, ammunition, or the keyboard-control hint; the desktop duplicate remains hidden at the mobile breakpoint.
 - Compact salvage HUD inspected in Pixel 7 emulation (2026-08-14): the standalone unsecured panel is absent and the bottom action reads `EXTRACT 0`, using the live carried-salvage value.
 - Camera-relative movement inspected in Firefox/WebGL (2026-08-14): after orbiting the camera approximately 90 degrees, holding W moved the player along the rotated camera-forward axis on the tactical map instead of the fixed world Z axis.
@@ -40,6 +42,7 @@ Full successful and failed combat runs still need an independent local playtest.
 
 ## Decision log
 
+- The modular machine system uses original Earthfall terminology and designs: one head, arms, core, and legs part may be equipped at a time. Issued parts form a complete starter build; hostile parts are earned through collection and successful extraction, never paid acquisition.
 - WASD, arrow-key, and touch-stick movement are camera-relative; orbiting the camera rotates both movement input and touch-stick aim by the same yaw so controls remain visually aligned.
 - Aim input is device-specific: desktop uses the mouse ground position, touch uses the floating movement-stick vector, and hybrid devices follow the most recently used aim device. Shots always use pawn facing; enemy auto-aim remains disabled.
 - The 2026-08-14 full-repository quality pass completed `app/` first and stopped at the documented scope boundary; `worker/`, `db/`, `scripts/`, `prototype/`, and `tests/` remain for a focused follow-up rather than receiving a superficial mixed-concern refactor.

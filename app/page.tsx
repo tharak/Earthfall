@@ -2,20 +2,24 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement } from "react";
 import { GameEngine } from "./game-engine";
-import type { EnemyKind, MissionDefinition, MissionHud, MissionMapId, MissionResult, SkinId, TouchInput, WeaponId } from "./game-types";
+import type { EnemyKind, MachineLoadout, MissionDefinition, MissionHud, MissionMapId, MissionResult, PartId, PartInventory, PartSlot, SkinId, TouchInput } from "./game-types";
 import { MiniMap } from "./mini-map";
 import { MISSION_MAPS } from "./map-content";
 import {
+  DEFAULT_LOADOUT,
+  DEFAULT_PART_INVENTORY,
   EXTRACTION_POSITIONS,
+  MACHINE_PARTS,
   MISSION_SECONDS,
   PLAYER_MAX_HEALTH,
   PLAYER_START_POSITION,
   REQUIRED_KILLS,
   TOUCH_STICK_RADIUS_PX,
   TOUCH_STICK_THRESHOLD_PX,
-  WEAPONS as WEAPON_CONFIG,
+  WEAPONS,
 } from "./game-config";
 import { EarthGlobe } from "./earth-globe";
+import { MachinePartPicker } from "./machine-loadout";
 
 type Screen = "command" | "mission" | "debrief";
 
@@ -82,24 +86,24 @@ const MISSIONS: MissionDefinition[] = [
   },
 ];
 
-const WEAPON_OPTIONS: Array<{ id: WeaponId; name: string; type: string; stat: string; detail: string }> = [
-  { id: "arc", name: "AR-7 ARC RIFLE", type: "PRECISION", stat: `${WEAPON_CONFIG.arc.damage} DMG · ${WEAPON_CONFIG.arc.magazine} MAG`, detail: "Measured shots. Heavy machine disruption." },
-  { id: "pulse", name: "PC-3 PULSE CARBINE", type: "SUPPRESSION", stat: `${WEAPON_CONFIG.pulse.damage} DMG · ${WEAPON_CONFIG.pulse.magazine} MAG`, detail: "Fast cadence. Built for close pressure." },
-];
-
 const SKINS: Array<{ id: SkinId; name: string; note: string; swatch: string }> = [
   { id: "carbon", name: "CARBON SHELL", note: "ISSUED", swatch: "skin-carbon" },
   { id: "salvage", name: "SALVAGE WHITE", note: "EARNABLE", swatch: "skin-salvage" },
   { id: "signal", name: "SIGNAL RED", note: "COSMETIC · R$ 18", swatch: "skin-signal" },
 ];
 
+const PARTS_STORAGE_KEY = "earthfall-parts";
+const LOADOUT_STORAGE_KEY = "earthfall-machine-loadout";
+
 const EMPTY_HUD: MissionHud = {
   health: PLAYER_MAX_HEALTH,
-  ammo: WEAPON_CONFIG.arc.magazine,
-  magazine: WEAPON_CONFIG.arc.magazine,
+  maxHealth: PLAYER_MAX_HEALTH,
+  ammo: WEAPONS.arc.magazine,
+  magazine: WEAPONS.arc.magazine,
   kills: 0,
   requiredKills: REQUIRED_KILLS,
   salvage: 0,
+  parts: [],
   timeLeft: MISSION_SECONDS,
   extractionUnlocked: true,
   extractionProgress: 0,
@@ -138,13 +142,13 @@ function EnemyTypeIcon({ type }: { type: EnemyKind }): ReactElement {
 
 function MissionStage({
   mission,
-  weapon,
+  loadout,
   skin,
   onEnd,
   onAbort,
 }: {
   mission: MissionDefinition & { mapId: MissionMapId };
-  weapon: WeaponId;
+  loadout: MachineLoadout;
   skin: SkinId;
   onEnd: (result: MissionResult) => void;
   onAbort: () => void;
@@ -172,7 +176,7 @@ function MissionStage({
     let engine: GameEngine | null = null;
     let errorFrame = 0;
     try {
-      engine = new GameEngine(canvasRef.current, mission.mapId, weapon, skin, touchRef.current, setHud, onEnd);
+      engine = new GameEngine(canvasRef.current, mission.mapId, loadout, skin, touchRef.current, setHud, onEnd);
     } catch {
       errorFrame = window.requestAnimationFrame(() => setWebglUnavailable(true));
     }
@@ -180,7 +184,7 @@ function MissionStage({
       if (errorFrame) window.cancelAnimationFrame(errorFrame);
       engine?.destroy();
     };
-  }, [mission.mapId, onEnd, skin, weapon]);
+  }, [loadout, mission.mapId, onEnd, skin]);
 
   if (webglUnavailable) {
     return (
@@ -257,11 +261,11 @@ function MissionStage({
       <div className="bottom-hud">
         <aside className="health-panel">
           <div className="health-copy"><span>VITALS</span><strong>{hud.health}</strong></div>
-          <div className="health-track"><i style={{ width: `${hud.health}%` }} /></div>
+          <div className="health-track"><i style={{ width: `${(hud.health / hud.maxHealth) * 100}%` }} /></div>
         </aside>
 
         <aside className="ammo-panel">
-          <span>{WEAPON_OPTIONS.find((item) => item.id === weapon)?.name}</span>
+          <span>{MACHINE_PARTS[loadout.arms].name}</span>
           <strong>{hud.reloading ? "--" : hud.ammo}<small> / {hud.magazine}</small></strong>
           <em>{hud.reloading ? "RELOADING" : "R · RELOAD"}</em>
         </aside>
@@ -309,7 +313,14 @@ function MissionStage({
   );
 }
 
+function summarizeParts(parts: PartId[]): Array<{ id: PartId; count: number }> {
+  const counts = new Map<PartId, number>();
+  parts.forEach((partId) => counts.set(partId, (counts.get(partId) ?? 0) + 1));
+  return [...counts].map(([id, count]) => ({ id, count }));
+}
+
 function DebriefScreen({ result, onReturn }: { result: MissionResult; onReturn: () => void }): ReactElement {
+  const parts = summarizeParts(result.parts);
   return (
     <main className={`debrief-shell ${result.success ? "success" : "failure"}`}>
       <div className="debrief-scan" />
@@ -317,12 +328,22 @@ function DebriefScreen({ result, onReturn }: { result: MissionResult; onReturn: 
         <span className="eyebrow">OPERATION 001 · CLOSED</span>
         <div className="debrief-mark">{result.success ? "✓" : "×"}</div>
         <h1>{result.success ? "EXTRACTION CONFIRMED" : "OPERATIVE SIGNAL LOST"}</h1>
-        <p>{result.success ? "Your salvage crossed the transfer field and has been banked." : result.reason === "timeout" ? "The carrier reinforced the zone before extraction." : "Unsecured salvage was abandoned inside the occupation zone."}</p>
+        <p>{result.success ? "Your salvage and recovered parts crossed the transfer field and have been banked." : result.reason === "timeout" ? "The carrier reinforced the zone before extraction." : "Unsecured salvage and parts were abandoned inside the occupation zone."}</p>
         <div className="debrief-stats">
           <div><span>MACHINES</span><strong>{result.kills}</strong></div>
           <div><span>RECOVERED</span><strong>{result.success ? result.salvage : 0} CR</strong></div>
           <div><span>LOST</span><strong>{result.success ? 0 : result.salvage} CR</strong></div>
         </div>
+        {parts.length > 0 && (
+          <div className={`recovered-parts ${result.success ? "secured" : "lost"}`}>
+            <span>{result.success ? "PARTS SECURED" : "PARTS LOST"}</span>
+            <div>
+              {parts.map(({ id, count }) => (
+                <strong key={id}>{MACHINE_PARTS[id].name}{count > 1 ? ` ×${count}` : ""}</strong>
+              ))}
+            </div>
+          </div>
+        )}
         <button className="primary-action" onClick={onReturn}>RETURN TO COMMAND <span>→</span></button>
       </section>
     </main>
@@ -330,47 +351,46 @@ function DebriefScreen({ result, onReturn }: { result: MissionResult; onReturn: 
 }
 
 type LoadoutProps = {
-  weapon: WeaponId;
+  loadout: MachineLoadout;
+  inventory: PartInventory;
   skin: SkinId;
-  onWeaponChange: (weapon: WeaponId) => void;
+  onPartChange: (slot: PartSlot, partId: PartId) => void;
   onSkinChange: (skin: SkinId) => void;
 };
 
-function LoadoutModal({ weapon, skin, onWeaponChange, onSkinChange, onClose }: LoadoutProps & { onClose: () => void }): ReactElement {
+function SkinPicker({ skin, onSkinChange, compact = false }: Pick<LoadoutProps, "skin" | "onSkinChange"> & { compact?: boolean }): ReactElement {
+  return (
+    <div className={`skin-picker ${compact ? "compact" : ""}`}>
+      <span className="eyebrow">FRAME FINISH · COSMETIC ONLY</span>
+      <div className="deploy-skin-options">
+        {SKINS.map((item) => (
+          <button key={item.id} className={`deploy-skin ${skin === item.id ? "selected" : ""}`} aria-pressed={skin === item.id} onClick={() => onSkinChange(item.id)}>
+            <i className={item.swatch} />
+            <span><strong>{item.name}</strong><small>{item.note}</small></span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LoadoutModal({ loadout, inventory, skin, onPartChange, onSkinChange, onClose }: LoadoutProps & { onClose: () => void }): ReactElement {
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="loadout-modal" role="dialog" aria-modal="true" aria-labelledby="loadout-title">
         <button className="modal-close" onClick={onClose} aria-label="Close loadout">×</button>
-        <span className="section-tag">OPERATIVE CONFIGURATION</span>
-        <h2 id="loadout-title">LOADOUT</h2>
-        <p>Combat equipment changes how you fight. Suit finishes are presentation only.</p>
-        <div className="loadout-columns">
-          <div>
-            <span className="eyebrow">PRIMARY WEAPON</span>
-            {WEAPON_OPTIONS.map((item) => (
-              <button key={item.id} className={`gear-card ${weapon === item.id ? "selected" : ""}`} onClick={() => onWeaponChange(item.id)}>
-                <i className={`weapon-shape ${item.id}`} />
-                <span><small>{item.type}</small><strong>{item.name}</strong><em>{item.stat}</em><p>{item.detail}</p></span>
-              </button>
-            ))}
-          </div>
-          <div>
-            <span className="eyebrow">SUIT FINISH · COSMETIC ONLY</span>
-            {SKINS.map((item) => (
-              <button key={item.id} className={`skin-card ${skin === item.id ? "selected" : ""}`} onClick={() => onSkinChange(item.id)}>
-                <i className={item.swatch} /><span><strong>{item.name}</strong><small>{item.note}</small></span>
-              </button>
-            ))}
-            <div className="commerce-note"><strong>DIRECT PURCHASES ONLY</strong><span>No random rewards. No gameplay advantage.</span></div>
-          </div>
-        </div>
+        <span className="section-tag">MACHINE CONFIGURATION</span>
+        <h2 id="loadout-title">PARTS LOADOUT</h2>
+        <p>Equip one part in every machine slot. Destroy hostile machines, collect their parts, and extract to make those parts available here.</p>
+        <MachinePartPicker loadout={loadout} inventory={inventory} onPartChange={onPartChange} />
+        <SkinPicker skin={skin} onSkinChange={onSkinChange} compact />
         <button className="primary-action" onClick={onClose}>CONFIRM LOADOUT <span>✓</span></button>
       </section>
     </div>
   );
 }
 
-function DeploymentModal({ mission, weapon, skin, onWeaponChange, onSkinChange, onCancel, onDeploy }: LoadoutProps & {
+function DeploymentModal({ mission, loadout, inventory, skin, onPartChange, onSkinChange, onCancel, onDeploy }: LoadoutProps & {
   mission: MissionDefinition;
   onCancel: () => void;
   onDeploy: () => void;
@@ -379,36 +399,16 @@ function DeploymentModal({ mission, weapon, skin, onWeaponChange, onSkinChange, 
     <div className="modal-backdrop briefing-backdrop">
       <section className="deployment-modal" role="dialog" aria-modal="true" aria-labelledby="deploy-title">
         <div className="deployment-number">0{MISSIONS.findIndex((item) => item.id === mission.id) + 1}</div>
-        <span className="section-tag">MISSION LOADOUT</span>
-        <h2 id="deploy-title">CHOOSE YOUR EQUIPMENT</h2>
-        <p>Select your weapon and suit before entering the occupation zone.</p>
+        <span className="section-tag">MISSION ASSEMBLY</span>
+        <h2 id="deploy-title">BUILD YOUR MACHINE</h2>
+        <p>Select the head, arms, core, and legs you want to deploy. Recovered enemy parts remain unsecured until extraction.</p>
         <div className="deploy-zone-summary">
           <span>DROP ZONE<strong>{mission.zone} · {mission.city}</strong></span>
           <span>OBJECTIVE<strong>DISMANTLE {REQUIRED_KILLS} MACHINES</strong></span>
         </div>
         <div className="deployment-picker">
-          <section>
-            <span className="eyebrow">PRIMARY WEAPON</span>
-            <div className="deploy-weapon-options">
-              {WEAPON_OPTIONS.map((item) => (
-                <button key={item.id} className={`deploy-weapon ${weapon === item.id ? "selected" : ""}`} aria-pressed={weapon === item.id} onClick={() => onWeaponChange(item.id)}>
-                  <i className={`weapon-shape ${item.id}`} />
-                  <span><small>{item.type}</small><strong>{item.name}</strong><em>{item.stat}</em></span>
-                </button>
-              ))}
-            </div>
-          </section>
-          <section>
-            <span className="eyebrow">SUIT FINISH</span>
-            <div className="deploy-skin-options">
-              {SKINS.map((item) => (
-                <button key={item.id} className={`deploy-skin ${skin === item.id ? "selected" : ""}`} aria-pressed={skin === item.id} onClick={() => onSkinChange(item.id)}>
-                  <i className={item.swatch} />
-                  <span><strong>{item.name}</strong><small>{item.note}</small></span>
-                </button>
-              ))}
-            </div>
-          </section>
+          <MachinePartPicker loadout={loadout} inventory={inventory} onPartChange={onPartChange} compact />
+          <SkinPicker skin={skin} onSkinChange={onSkinChange} compact />
         </div>
         <div className="deployment-actions">
           <button onClick={onCancel}>CANCEL</button>
@@ -423,7 +423,8 @@ function CommandScreen({
   mission,
   selectedMission,
   credits,
-  weapon,
+  loadout,
+  inventory,
   skin,
   loadoutOpen,
   briefingOpen,
@@ -432,7 +433,7 @@ function CommandScreen({
   onLoadoutClose,
   onBriefingOpen,
   onBriefingClose,
-  onWeaponChange,
+  onPartChange,
   onSkinChange,
   onDeploy,
 }: LoadoutProps & {
@@ -495,16 +496,56 @@ function CommandScreen({
         <span>BUILD 0.1.0</span>
       </footer>
 
-      {loadoutOpen && <LoadoutModal weapon={weapon} skin={skin} onWeaponChange={onWeaponChange} onSkinChange={onSkinChange} onClose={onLoadoutClose} />}
-      {briefingOpen && <DeploymentModal mission={mission} weapon={weapon} skin={skin} onWeaponChange={onWeaponChange} onSkinChange={onSkinChange} onCancel={onBriefingClose} onDeploy={onDeploy} />}
+      {loadoutOpen && <LoadoutModal loadout={loadout} inventory={inventory} skin={skin} onPartChange={onPartChange} onSkinChange={onSkinChange} onClose={onLoadoutClose} />}
+      {briefingOpen && <DeploymentModal mission={mission} loadout={loadout} inventory={inventory} skin={skin} onPartChange={onPartChange} onSkinChange={onSkinChange} onCancel={onBriefingClose} onDeploy={onDeploy} />}
     </main>
   );
+}
+
+function isPartId(value: unknown): value is PartId {
+  return typeof value === "string" && value in MACHINE_PARTS;
+}
+
+function restoreInventory(value: string | null): PartInventory {
+  if (!value) return DEFAULT_PART_INVENTORY;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object") return DEFAULT_PART_INVENTORY;
+    const inventory: PartInventory = { ...DEFAULT_PART_INVENTORY };
+    Object.entries(parsed).forEach(([partId, count]) => {
+      if (isPartId(partId) && typeof count === "number" && Number.isFinite(count) && count > 0) {
+        inventory[partId] = Math.floor(count);
+      }
+    });
+    return inventory;
+  } catch {
+    return DEFAULT_PART_INVENTORY;
+  }
+}
+
+function restoreLoadout(value: string | null, inventory: PartInventory): MachineLoadout {
+  if (!value) return DEFAULT_LOADOUT;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object") return DEFAULT_LOADOUT;
+    const saved = parsed as Record<string, unknown>;
+    const loadout: MachineLoadout = { ...DEFAULT_LOADOUT };
+    Object.keys(loadout).forEach((slotName) => {
+      const slot = slotName as PartSlot;
+      const partId = saved[slot];
+      if (isPartId(partId) && MACHINE_PARTS[partId].slot === slot && (inventory[partId] ?? 0) > 0) loadout[slot] = partId;
+    });
+    return loadout;
+  } catch {
+    return DEFAULT_LOADOUT;
+  }
 }
 
 export default function Home(): ReactElement {
   const [screen, setScreen] = useState<Screen>("command");
   const [selectedMission, setSelectedMission] = useState(MISSIONS[0].id);
-  const [weapon, setWeapon] = useState<WeaponId>("arc");
+  const [loadout, setLoadout] = useState<MachineLoadout>({ ...DEFAULT_LOADOUT });
+  const [inventory, setInventory] = useState<PartInventory>({ ...DEFAULT_PART_INVENTORY });
   const [skin, setSkin] = useState<SkinId>("carbon");
   const [credits, setCredits] = useState(600);
   const [result, setResult] = useState<MissionResult | null>(null);
@@ -513,8 +554,13 @@ export default function Home(): ReactElement {
 
   useEffect(() => {
     const saved = window.localStorage.getItem("earthfall-credits");
-    if (!saved) return;
-    const frame = window.requestAnimationFrame(() => setCredits(Number(saved) || 600));
+    const restoredInventory = restoreInventory(window.localStorage.getItem(PARTS_STORAGE_KEY));
+    const restoredLoadout = restoreLoadout(window.localStorage.getItem(LOADOUT_STORAGE_KEY), restoredInventory);
+    const frame = window.requestAnimationFrame(() => {
+      if (saved) setCredits(Number(saved) || 600);
+      setInventory(restoredInventory);
+      setLoadout(restoredLoadout);
+    });
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
@@ -531,12 +577,29 @@ export default function Home(): ReactElement {
         window.localStorage.setItem("earthfall-credits", String(next));
         return next;
       });
+      setInventory((current) => {
+        const next = { ...current };
+        missionResult.parts.forEach((partId) => {
+          next[partId] = (next[partId] ?? 0) + 1;
+        });
+        window.localStorage.setItem(PARTS_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
     }
     setScreen("debrief");
   };
 
+  const changePart = (slot: PartSlot, partId: PartId): void => {
+    if (MACHINE_PARTS[partId].slot !== slot || (inventory[partId] ?? 0) <= 0) return;
+    setLoadout((current) => {
+      const next = { ...current, [slot]: partId };
+      window.localStorage.setItem(LOADOUT_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
   if (screen === "mission" && mission.mapId) {
-    return <MissionStage mission={{ ...mission, mapId: mission.mapId }} weapon={weapon} skin={skin} onEnd={finishMission} onAbort={() => setScreen("command")} />;
+    return <MissionStage mission={{ ...mission, mapId: mission.mapId }} loadout={loadout} skin={skin} onEnd={finishMission} onAbort={() => setScreen("command")} />;
   }
 
   if (screen === "debrief" && result) {
@@ -548,7 +611,8 @@ export default function Home(): ReactElement {
       mission={mission}
       selectedMission={selectedMission}
       credits={credits}
-      weapon={weapon}
+      loadout={loadout}
+      inventory={inventory}
       skin={skin}
       loadoutOpen={loadoutOpen}
       briefingOpen={briefing}
@@ -557,7 +621,7 @@ export default function Home(): ReactElement {
       onLoadoutClose={() => setLoadoutOpen(false)}
       onBriefingOpen={() => setBriefing(true)}
       onBriefingClose={() => setBriefing(false)}
-      onWeaponChange={setWeapon}
+      onPartChange={changePart}
       onSkinChange={setSkin}
       onDeploy={() => { setBriefing(false); setScreen("mission"); }}
     />

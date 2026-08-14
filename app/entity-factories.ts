@@ -3,6 +3,7 @@ import {
   ENEMIES,
   ENEMY_INITIAL_COOLDOWN_SECONDS,
   ENEMY_PHASE_COOLDOWN_SECONDS,
+  MACHINE_PARTS,
   PLAYER_HEIGHT_METERS,
   PLAYER_RADIUS_METERS,
   SKINS,
@@ -12,6 +13,7 @@ import type {
   EnemyKind,
   ExtractionEntity,
   PickupEntity,
+  PartId,
   PlayerEntity,
   SkinId,
   TimedObject,
@@ -125,7 +127,26 @@ export function createSalvagePickup(position: THREE.Vector3, value: number): Pic
   );
   mesh.position.copy(position);
   mesh.position.y = 0.62;
-  return { mesh, value, baseY: 0.62, phase: Math.random() * Math.PI * 2 };
+  return { mesh, payload: { kind: "salvage", value }, baseY: 0.62, phase: Math.random() * Math.PI * 2 };
+}
+
+export function createPartPickup(position: THREE.Vector3, partId: PartId): PickupEntity {
+  const source = MACHINE_PARTS[partId].source;
+  const color = source === "hunter" ? 0xff465d : 0xffb23e;
+  const mesh = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.42, 0),
+    new THREE.MeshStandardMaterial({
+      color,
+      emissive: color,
+      emissiveIntensity: 1.35,
+      roughness: 0.28,
+      metalness: 0.72,
+    }),
+  );
+  mesh.position.copy(position);
+  mesh.position.x += 0.72;
+  mesh.position.y = 0.72;
+  return { mesh, payload: { kind: "part", partId }, baseY: 0.72, phase: Math.random() * Math.PI * 2 };
 }
 
 export function createBurstFragments(position: THREE.Vector3, color: number): TimedObject[] {

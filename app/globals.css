@@ -173,6 +173,10 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .modal-backdrop { position: fixed; z-index: 30; inset: 0; display: grid; place-items: center; padding: 26px; background: rgba(1, 5, 7, 0.82); backdrop-filter: blur(12px); animation: fade-in 180ms ease-out; }
 .loadout-modal,
 .deployment-modal { width: min(860px, 100%); max-height: calc(100vh - 42px); position: relative; overflow: auto; padding: 34px; border: 1px solid var(--line-strong); background: linear-gradient(rgba(94, 210, 218, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(94, 210, 218, 0.04) 1px, transparent 1px), #071013; background-size: 34px 34px; box-shadow: 0 30px 120px #000; clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%); }
+.loadout-modal { padding: 26px 30px; }
+.loadout-modal .machine-picker { margin: 14px 0 10px; }
+.loadout-modal .part-card { min-height: 92px; }
+.loadout-modal .skin-picker { margin: 8px 0 10px; }
 .modal-close { width: 38px; height: 38px; position: absolute; top: 18px; right: 22px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 24px; cursor: pointer; }
 .loadout-modal > p,
 .deployment-modal > p { max-width: 590px; color: var(--muted); font-size: 10px; line-height: 1.7; }
@@ -202,13 +206,68 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .commerce-note { margin-top: auto; padding: 14px; border-left: 2px solid var(--green); background: rgba(98, 255, 182, 0.06); display: flex; flex-direction: column; gap: 5px; }
 .commerce-note strong { color: var(--green); font-size: 8px; letter-spacing: 0.12em; }
 .commerce-note span { color: var(--muted); font-size: 8px; }
-.deployment-modal { width: min(780px, 100%); }
+.machine-picker { display: grid; gap: 10px; margin: 22px 0 16px; }
+.part-slot-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.part-slot-tabs button { min-width: 0; min-height: 66px; display: flex; flex-direction: column; gap: 7px; padding: 10px; overflow: hidden; border: 1px solid var(--line); background: rgba(8, 19, 22, 0.76); color: var(--muted); text-align: left; cursor: pointer; }
+.part-slot-tabs button:hover,
+.part-slot-tabs button.active { border-color: var(--cyan); background: rgba(31, 91, 98, 0.22); color: var(--text); }
+.part-slot-tabs small { color: var(--cyan); font-size: 6px; letter-spacing: 0.17em; }
+.part-slot-tabs strong { overflow: hidden; font-family: var(--display); font-size: 11px; letter-spacing: 0.05em; text-overflow: ellipsis; white-space: nowrap; }
+.part-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+.part-card { min-height: 106px; display: grid; grid-template-columns: 58px 1fr; align-items: center; gap: 10px; padding: 11px; border: 1px solid var(--line); background: rgba(10, 21, 24, 0.78); color: var(--text); text-align: left; cursor: pointer; }
+.part-card:hover:not(:disabled),
+.part-card.selected { border-color: var(--cyan); background: rgba(31, 91, 98, 0.24); box-shadow: 0 0 24px rgba(92, 231, 255, 0.06) inset; }
+.part-card:disabled { opacity: 0.4; cursor: not-allowed; }
+.part-card > span { min-width: 0; display: flex; flex-direction: column; }
+.part-card small { overflow: hidden; color: var(--cyan); font-size: 6px; letter-spacing: 0.1em; text-overflow: ellipsis; white-space: nowrap; }
+.part-card strong { margin: 5px 0 3px; font-family: var(--display); font-size: 15px; letter-spacing: 0.05em; }
+.part-card em { color: var(--green); font-size: 7px; font-style: normal; letter-spacing: 0.08em; }
+.part-card p { margin: 7px 0 0; color: var(--muted); font-size: 7px; line-height: 1.45; }
+.part-icon { width: 44px; height: 44px; position: relative; display: block; border: 1px solid rgba(92, 231, 255, 0.32); background: rgba(92, 231, 255, 0.08); box-shadow: 0 0 14px rgba(92, 231, 255, 0.08) inset; }
+.part-icon::before,
+.part-icon::after { content: ""; position: absolute; background: var(--cyan); }
+.part-icon.head { border-radius: 50% 50% 35% 35%; }
+.part-icon.head::before { width: 22px; height: 5px; left: 10px; top: 17px; box-shadow: 0 0 8px var(--cyan); }
+.part-icon.arms { clip-path: polygon(0 25%, 36% 25%, 42% 0, 58% 0, 64% 25%, 100% 25%, 100% 75%, 62% 75%, 55% 100%, 45% 100%, 38% 75%, 0 75%); }
+.part-icon.arms::before { width: 30px; height: 5px; left: 7px; top: 19px; }
+.part-icon.core { clip-path: polygon(20% 0, 80% 0, 100% 25%, 84% 100%, 16% 100%, 0 25%); }
+.part-icon.core::before { width: 10px; height: 18px; left: 16px; top: 12px; }
+.part-icon.legs { clip-path: polygon(8% 0, 43% 0, 48% 45%, 34% 100%, 0 100%, 18% 43%, 0 18%, 57% 18%, 82% 43%, 100% 100%, 66% 100%, 52% 45%, 57% 0, 92% 0, 100% 18%, 0 18%); }
+.part-icon.legs::before { width: 6px; height: 27px; left: 11px; top: 9px; }
+.part-icon.legs::after { width: 6px; height: 27px; right: 11px; top: 9px; }
+.part-icon.hunter { border-color: rgba(255, 70, 93, 0.5); background-color: rgba(255, 70, 93, 0.08); }
+.part-icon.hunter::before,
+.part-icon.hunter::after { background: var(--red); }
+.part-icon.sentry { border-color: rgba(255, 178, 62, 0.5); background-color: rgba(255, 178, 62, 0.08); }
+.part-icon.sentry::before,
+.part-icon.sentry::after { background: var(--amber); }
+.assembly-stats { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); }
+.assembly-stats span { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 8px 10px; border-right: 1px solid var(--line); color: var(--muted); font-size: 6px; letter-spacing: 0.1em; }
+.assembly-stats span:last-child { border-right: 0; }
+.assembly-stats strong { color: var(--green); font-family: var(--display); font-size: 12px; }
+.machine-picker.compact { margin: 0; }
+.machine-picker.compact .part-card { min-height: 76px; }
+.skin-picker { display: grid; gap: 8px; margin: 12px 0 18px; }
+.skin-picker > .eyebrow { display: block; }
+.recovered-parts { margin: 0 0 16px; padding: 12px; border: 1px solid var(--line); }
+.recovered-parts > span { color: var(--green); font-size: 7px; letter-spacing: 0.16em; }
+.recovered-parts.lost > span { color: var(--red); }
+.recovered-parts > div { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.recovered-parts strong { padding: 6px 8px; border: 1px solid rgba(98, 255, 182, 0.28); color: var(--text); font-family: var(--display); font-size: 9px; letter-spacing: 0.06em; }
+.recovered-parts.lost strong { border-color: rgba(255, 64, 89, 0.28); }
+.deployment-modal { width: min(780px, 100%); padding: 22px 28px; }
+.deployment-modal h2 { font-size: clamp(32px, 3.1vw, 44px); }
+.deployment-modal > p { margin: 7px 0; line-height: 1.45; }
+.deployment-modal .machine-picker.compact { gap: 7px; }
+.deployment-modal .machine-picker.compact .part-slot-tabs button { min-height: 54px; padding: 8px; }
+.deployment-modal .machine-picker.compact .part-card { min-height: 66px; padding-block: 7px; }
+.deployment-modal .skin-picker { margin: 2px 0 4px; }
 .deployment-number { position: absolute; right: 30px; top: 8px; color: rgba(92, 231, 255, 0.07); font-family: var(--display); font-size: 170px; font-weight: 700; line-height: 1; }
-.deploy-zone-summary { position: relative; z-index: 1; display: grid; grid-template-columns: 1.25fr 1fr; margin: 20px 0; border: 1px solid var(--line); }
+.deploy-zone-summary { position: relative; z-index: 1; display: grid; grid-template-columns: 1.25fr 1fr; margin: 10px 0; border: 1px solid var(--line); }
 .deploy-zone-summary span { min-height: 54px; display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 9px 12px; border-right: 1px solid var(--line); color: var(--muted); font-size: 7px; letter-spacing: 0.12em; }
 .deploy-zone-summary span:last-child { border-right: 0; }
 .deploy-zone-summary strong { color: var(--text); font-family: var(--display); font-size: 13px; letter-spacing: 0.05em; }
-.deployment-picker { position: relative; z-index: 1; display: grid; gap: 18px; margin-bottom: 22px; }
+.deployment-picker { position: relative; z-index: 1; display: grid; gap: 8px; margin-bottom: 10px; }
 .deployment-picker section > .eyebrow { display: block; margin-bottom: 8px; }
 .deploy-weapon-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .deploy-weapon { min-height: 88px; display: grid; grid-template-columns: 104px 1fr; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--line); background: rgba(10, 21, 24, 0.78); text-align: left; cursor: pointer; }
@@ -351,6 +410,20 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
   .loadout-modal,
   .deployment-modal { max-height: calc(100dvh - 20px); padding: 25px 18px; }
   .loadout-columns { grid-template-columns: 1fr; }
+  .part-slot-tabs { grid-template-columns: repeat(2, 1fr); }
+  .part-slot-tabs button { min-height: 50px; padding: 7px; }
+  .part-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .part-card { min-height: 78px; grid-template-columns: 34px 1fr; gap: 7px; padding: 7px; }
+  .part-card strong { font-size: 11px; }
+  .part-card p { display: none; }
+  .part-icon { width: 30px; height: 30px; transform: scale(0.82); transform-origin: center; }
+  .part-icon.head::before { left: 3px; top: 11px; }
+  .part-icon.arms::before { left: 0; top: 12px; }
+  .part-icon.core::before { left: 9px; top: 6px; }
+  .part-icon.legs::before { left: 5px; top: 2px; }
+  .part-icon.legs::after { right: 5px; top: 2px; }
+  .assembly-stats span { flex-direction: column; align-items: flex-start; padding: 6px; }
+  .deploy-skin-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .gear-card { grid-template-columns: 92px 1fr; }
   .weapon-shape { width: 80px; }
   .deploy-zone-summary { margin: 14px 0; }

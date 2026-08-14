@@ -1,5 +1,5 @@
 import gameScale from "./game-scale.json";
-import type { EnemyKind, SkinId, WeaponId } from "./game-types";
+import type { EnemyKind, MachineLoadout, MachineStats, PartId, PartInventory, PartSlot, SkinId, WeaponId } from "./game-types";
 
 type WeaponConfig = {
   magazine: number;
@@ -23,6 +23,21 @@ type EnemyConfig = {
   hitRadius: number;
   salvageValue: number;
   effectColor: number;
+  partDrops: readonly PartId[];
+};
+
+export type MachinePartConfig = {
+  name: string;
+  slot: PartSlot;
+  source: "issued" | EnemyKind;
+  description: string;
+  stat: string;
+  weaponId?: WeaponId;
+  healthBonus?: number;
+  moveSpeedMultiplier?: number;
+  damageMultiplier?: number;
+  reloadMultiplier?: number;
+  rangeMultiplier?: number;
 };
 
 export const WEAPONS = {
@@ -36,6 +51,55 @@ export const SKINS = {
   signal: { body: 0x8d1e2c, accent: 0xffc4c9 },
 } as const satisfies Record<SkinId, SkinConfig>;
 
+export const MACHINE_PARTS = {
+  "scout-optic": { name: "SCOUT OPTIC", slot: "head", source: "issued", description: "Reliable short-range targeting package.", stat: "STANDARD TARGETING" },
+  "hunter-optic": { name: "HUNTER VISOR", slot: "head", source: "hunter", description: "Aggressive tracking logic recovered from Hunters.", stat: "+8% DAMAGE", damageMultiplier: 1.08 },
+  "sentry-array": { name: "SENTRY ARRAY", slot: "head", source: "sentry", description: "Long-baseline sensors built to hold firing lanes.", stat: "+20% RANGE", rangeMultiplier: 1.2 },
+  "arc-arms": { name: "AR-7 ARC ARMS", slot: "arms", source: "issued", description: "Measured shots with heavy machine disruption.", stat: "42 DMG · 12 MAG", weaponId: "arc" },
+  "pulse-arms": { name: "PC-3 PULSE ARMS", slot: "arms", source: "issued", description: "Fast cadence for close pressure.", stat: "24 DMG · 24 MAG", weaponId: "pulse" },
+  "hunter-arms": { name: "HUNTER REPEATERS", slot: "arms", source: "hunter", description: "A tuned pulse assembly stripped from a Hunter.", stat: "+10% DAMAGE · PULSE", weaponId: "pulse", damageMultiplier: 1.1 },
+  "sentry-arms": { name: "SENTRY CANNON", slot: "arms", source: "sentry", description: "A heavy arc projector with a slower service cycle.", stat: "+18% DAMAGE · ARC", weaponId: "arc", damageMultiplier: 1.18, reloadMultiplier: 1.12 },
+  "carbon-core": { name: "CARBON CORE", slot: "core", source: "issued", description: "Balanced issued armor and power routing.", stat: "100 INTEGRITY" },
+  "sentry-core": { name: "SENTRY BULWARK", slot: "core", source: "sentry", description: "Dense armor recovered from a lane-holding unit.", stat: "+25 INTEGRITY", healthBonus: 25 },
+  "runner-legs": { name: "RUNNER LEGS", slot: "legs", source: "issued", description: "Stable urban traversal actuators.", stat: "STANDARD SPEED" },
+  "hunter-legs": { name: "HUNTER STRIDERS", slot: "legs", source: "hunter", description: "High-output pursuit actuators.", stat: "+15% MOVE SPEED", moveSpeedMultiplier: 1.15 },
+} as const satisfies Record<PartId, MachinePartConfig>;
+
+export const PART_SLOTS: readonly PartSlot[] = ["head", "arms", "core", "legs"];
+
+export const DEFAULT_LOADOUT: MachineLoadout = {
+  head: "scout-optic",
+  arms: "arc-arms",
+  core: "carbon-core",
+  legs: "runner-legs",
+};
+
+export const DEFAULT_PART_INVENTORY: PartInventory = {
+  "scout-optic": 1,
+  "arc-arms": 1,
+  "pulse-arms": 1,
+  "carbon-core": 1,
+  "runner-legs": 1,
+};
+
+export function getMachineStats(loadout: MachineLoadout): MachineStats {
+  return Object.values(loadout).reduce<MachineStats>((stats, partId) => {
+    const part = MACHINE_PARTS[partId];
+    stats.maxHealth += part.healthBonus ?? 0;
+    stats.moveSpeed *= part.moveSpeedMultiplier ?? 1;
+    stats.damageMultiplier *= part.damageMultiplier ?? 1;
+    stats.reloadMultiplier *= part.reloadMultiplier ?? 1;
+    stats.rangeMultiplier *= part.rangeMultiplier ?? 1;
+    return stats;
+  }, {
+    maxHealth: PLAYER_MAX_HEALTH,
+    moveSpeed: PLAYER_MOVE_SPEED,
+    damageMultiplier: 1,
+    reloadMultiplier: 1,
+    rangeMultiplier: 1,
+  });
+}
+
 export const ENEMIES = {
   hunter: {
     health: 80,
@@ -46,6 +110,7 @@ export const ENEMIES = {
     hitRadius: 0.72,
     salvageValue: 35,
     effectColor: 0xff465d,
+    partDrops: ["hunter-optic", "hunter-arms", "hunter-legs"],
   },
   sentry: {
     health: 110,
@@ -56,6 +121,7 @@ export const ENEMIES = {
     hitRadius: 0.95,
     salvageValue: 55,
     effectColor: 0xffb23e,
+    partDrops: ["sentry-array", "sentry-arms", "sentry-core"],
   },
 } as const satisfies Record<EnemyKind, EnemyConfig>;
 

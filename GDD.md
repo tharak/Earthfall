@@ -38,7 +38,7 @@ flowchart LR
     A[Choose loadout] --> B[Select city zone]
     B --> C[Deploy]
     C --> D[Destroy machines]
-    D --> E[Collect salvage]
+    D --> E[Collect salvage and machine parts]
     E --> F{Extract?}
     F -->|Stay| D
     F -->|Leave| G[Bank rewards]
@@ -55,10 +55,10 @@ flowchart LR
 
 ### Risk and reward
 
-- Destroyed robots drop salvage spheres.
-- Salvage carried during a mission is **unsecured**.
-- Reaching extraction banks the salvage as account credits.
-- Failure loses unsecured salvage but never removes previously banked currency, equipment, or purchased cosmetics.
+- Destroyed robots drop salvage spheres and recoverable machine parts.
+- Salvage and parts carried during a mission are **unsecured**.
+- Reaching extraction banks salvage as account credits and adds recovered parts to the player's inventory.
+- Failure loses unsecured salvage and parts but never removes previously banked currency, equipment, or purchased cosmetics.
 - Later versions can offer optional side objectives that increase rewards and threat without making the primary objective unclear.
 
 ## 4. Player experience flow
@@ -79,17 +79,16 @@ The information hierarchy is inspired by Helldivers 2's readable mission preview
 
 ### 4.2 Loadout
 
-The prototype offers two weapons and three suit finishes:
+The player's machine is assembled from four functional slots. Each slot accepts one owned part, and the combined assembly determines mission stats:
 
-| Item | Role | Prototype behavior |
+| Slot | Function | Prototype examples |
 | --- | --- | --- |
-| Arc rifle | Precise, high impact | 12-round magazine, slower cadence, high damage |
-| Pulse carbine | Mobile crowd control | 24-round magazine, fast cadence, lower damage |
-| Carbon shell | Default skin | Dark graphite with cyan telemetry |
-| Salvage white | Earnable skin | High-contrast white and orange finish |
-| Signal red | Store skin mock | Direct-purchase cosmetic preview; no checkout in prototype |
+| Head | Targeting and weapon range | Scout optic, Hunter visor, Sentry array |
+| Arms | Weapon, damage, magazine, and reload profile | Arc arms, Pulse arms, Hunter repeaters, Sentry cannon |
+| Core | Integrity and armor | Carbon core, Sentry bulwark |
+| Legs | Movement speed | Runner legs, Hunter striders |
 
-Weapons can be unlocked with earned credits in later versions. Paid purchases are cosmetic only.
+Issued parts provide a complete starter build. Hostile machine parts must be collected in the mission and successfully extracted before they can be equipped. Duplicate parts are retained in the inventory as a visible collection count. Three frame finishes remain cosmetic only: Carbon shell, Salvage white, and Signal red.
 
 ### 4.3 Mission
 
@@ -105,7 +104,7 @@ Prototype objective sequence:
 
 ### 4.4 Debrief
 
-Show robots destroyed, unsecured salvage collected, extraction result, credits banked, and a clear return-to-command action. A failed run should invite another attempt without shame or friction.
+Show robots destroyed, unsecured salvage collected, parts recovered or lost, extraction result, credits banked, and a clear return-to-command action. A failed run should invite another attempt without shame or friction.
 
 ## 5. Combat
 
@@ -125,7 +124,7 @@ Show robots destroyed, unsecured salvage collected, extraction result, credits b
 - Input-to-shot feedback must be immediate.
 - Hits use a short tracer, impact flash, robot color response, and light camera shake.
 - The player must be able to distinguish taking damage from dealing damage without reading numbers.
-- Reload state, ammunition, health, objective progress, carried salvage, and extraction progress are always visible.
+- Reload state, ammunition, health, carried salvage, and extraction progress are always visible. Part recovery is announced immediately and summarized during debrief.
 - Obstacles block movement and create useful combat lanes.
 
 ### Initial balance
@@ -203,7 +202,7 @@ This lets later missions reuse combat systems while changing spatial problems.
 
 ### Earned currency
 
-Credits are banked only on extraction and may unlock weapons, utility equipment, and non-premium cosmetics. Prices should create visible short-term goals without forcing grind.
+Credits are banked only on extraction and may unlock utility equipment and non-premium cosmetics. Functional machine parts are earned from defeated enemies and secured only by extraction. Prices should create visible short-term goals without forcing grind.
 
 ### Cosmetic store principles
 

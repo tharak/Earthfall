@@ -3,6 +3,19 @@ import type * as THREE from "three";
 export type WeaponId = "arc" | "pulse";
 export type SkinId = "carbon" | "salvage" | "signal";
 export type EnemyKind = "hunter" | "sentry";
+export type PartSlot = "head" | "arms" | "core" | "legs";
+export type PartId =
+  | "scout-optic"
+  | "hunter-optic"
+  | "sentry-array"
+  | "arc-arms"
+  | "pulse-arms"
+  | "hunter-arms"
+  | "sentry-arms"
+  | "carbon-core"
+  | "sentry-core"
+  | "runner-legs"
+  | "hunter-legs";
 export type MissionMapId = "sao-paulo" | "tokyo";
 export type MissionStatus = "PLAYABLE" | "SCANNING";
 export type WorldPoint = { x: number; z: number };
@@ -82,11 +95,13 @@ export type TacticalMapState = {
 
 export type MissionHud = {
   health: number;
+  maxHealth: number;
   ammo: number;
   magazine: number;
   kills: number;
   requiredKills: number;
   salvage: number;
+  parts: PartId[];
   timeLeft: number;
   extractionUnlocked: boolean;
   extractionProgress: number;
@@ -99,7 +114,19 @@ export type MissionResult = {
   success: boolean;
   kills: number;
   salvage: number;
+  parts: PartId[];
   reason: "extracted" | "eliminated" | "timeout";
+};
+
+export type MachineLoadout = Record<PartSlot, PartId>;
+export type PartInventory = Partial<Record<PartId, number>>;
+
+export type MachineStats = {
+  maxHealth: number;
+  moveSpeed: number;
+  damageMultiplier: number;
+  reloadMultiplier: number;
+  rangeMultiplier: number;
 };
 
 export type TouchInput = {
@@ -154,7 +181,7 @@ export type EnemyEntity = {
 
 export type PickupEntity = {
   mesh: THREE.Mesh;
-  value: number;
+  payload: { kind: "salvage"; value: number } | { kind: "part"; partId: PartId };
   baseY: number;
   phase: number;
 };

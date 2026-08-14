@@ -7,6 +7,7 @@ Earthfall keeps React mission flow separate from the Three.js simulation. `app/p
 - `game-engine.ts` — mission lifecycle and orchestration. It advances combat state and connects the modules below; it should not contain mesh-building or DOM input details.
 - `game-types.ts` — shared public contracts and internal entity shapes. UI code imports HUD and control types from here.
 - `game-config.ts` — gameplay tuning, world scale, weapons, skins, and mission limits.
+- `machine-loadout.tsx` — presentational machine-part picker and derived-stat summary; loadout ownership and persistence remain in `page.tsx`.
 - `game-input.ts` — keyboard, aiming pointer, firing input, and input listener cleanup.
 - `orbit-camera.ts` — RMB orbit state and camera positioning.
 - `enemy-controller.ts` — enemy decision policy, isolated from rendering.
@@ -19,6 +20,7 @@ Earthfall keeps React mission flow separate from the Three.js simulation. `app/p
 ## Where to make common changes
 
 - Change weapon damage or mission duration in `game-config.ts`.
+- Add or tune recoverable head, arms, core, or legs in `game-config.ts`; keep inventory and equipped-part contracts in `game-types.ts`.
 - Change controls in `game-input.ts`; change camera feel in `orbit-camera.ts`.
 - Change an enemy's appearance in `entity-factories.ts`; change its behavior in `enemy-controller.ts` or the enemy update in `game-engine.ts`.
 - Change street density or prop appearance in `street-obstacles.ts`.
