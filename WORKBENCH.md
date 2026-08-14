@@ -10,6 +10,10 @@ Loadout → city selection → mission deployment → fight and collect salvage 
 
 ## Validation
 
+- `app/` code-quality refactor (2026-08-14): shared map/mission contracts now originate in `game-types.ts`; gameplay and search tuning moved to `game-config.ts`; transient Three.js effects moved out of the mission orchestrator into `entity-factories.ts`; and `page.tsx` was decomposed into focused mission, command, loadout, deployment, and debrief render sections without moving React flow ownership.
+- Strict TypeScript checking now covers Three.js through `@types/three`; the game client passes `tsc --noEmit`. Cloudflare ambient types remain a separate worker/database follow-up.
+- Firefox/WebGL refactor regression inspected at 1280 × 720 (2026-08-14): command view, loadout modal, carbine/suit selection, deployment confirmation, and live Praça da Sé mission all rendered correctly with no application console errors.
+- Refactor validation (2026-08-14): `npm run lint`, `npm test`, and `npm run build:pages` all pass; all three automated tests remain green and the static Pages bundle is refreshed.
 - `npm run lint` — passed (2026-08-13).
 - `npm test` — passed (2026-08-13), including the production build, Sites artifact validation, and rendered HTML test.
 - `npm run build:pages` — passed (2026-08-13); static bundle uses relative asset paths.
@@ -32,6 +36,8 @@ Full successful and failed combat runs still need an independent local playtest.
 
 ## Decision log
 
+- The 2026-08-14 full-repository quality pass completed `app/` first and stopped at the documented scope boundary; `worker/`, `db/`, `scripts/`, `prototype/`, and `tests/` remain for a focused follow-up rather than receiving a superficial mixed-concern refactor.
+- Game-client dependencies continue to point toward shared types/config and focused helpers. No helper imports `GameEngine`; the orchestrator no longer constructs meshes.
 - Original-IP working title: Earthfall Protocol.
 - First playable location: an abstracted Praça da Sé, São Paulo.
 - Real map extent: 1,024 × 1,024 m centered on Catedral da Sé at `-23.5512688, -46.6343705`; extract bounds are south `-23.5558682`, west `-46.6393878`, north `-23.5466694`, east `-46.6293532`.
