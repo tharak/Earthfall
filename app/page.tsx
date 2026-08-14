@@ -350,9 +350,8 @@ export default function Home() {
         </div>
 
         <aside className="zone-selection" aria-live="polite">
-          <div className="zone-status"><i data-status={mission.status} /><small>{mission.coordinates}</small></div>
-          <h2>{mission.zone}</h2>
-          <p>{mission.city} · {mission.country}</p>
+          <div className="zone-title"><i data-status={mission.status} /><h2>{mission.zone}</h2></div>
+          <div className="zone-meta"><span>{mission.city} · {mission.country}</span><small>{mission.coordinates}</small></div>
           <div className="enemy-types">
             <div>
               {mission.enemyTypes.map((type) => (
