@@ -81,6 +81,8 @@ The information hierarchy is inspired by Helldivers 2's readable mission preview
 
 The player's machine is assembled from four functional slots. Each slot accepts one owned part, and the combined assembly determines mission stats:
 
+The loadout interface presents the complete humanoid machine as an interactive technical schematic. Selecting its head, arm assembly, torso core, or legs opens the compatible owned and recoverable parts for that physical region.
+
 | Slot | Function | Prototype examples |
 | --- | --- | --- |
 | Head | Targeting and weapon range | Scout optic, Hunter visor, Sentry array |

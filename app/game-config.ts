@@ -65,8 +65,6 @@ export const MACHINE_PARTS = {
   "hunter-legs": { name: "HUNTER STRIDERS", slot: "legs", source: "hunter", description: "High-output pursuit actuators.", stat: "+15% MOVE SPEED", moveSpeedMultiplier: 1.15 },
 } as const satisfies Record<PartId, MachinePartConfig>;
 
-export const PART_SLOTS: readonly PartSlot[] = ["head", "arms", "core", "legs"];
-
 export const DEFAULT_LOADOUT: MachineLoadout = {
   head: "scout-optic",
   arms: "arc-arms",
