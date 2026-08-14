@@ -6,6 +6,7 @@ import type { MissionHud, MissionResult, SkinId, TouchInput, WeaponId } from "./
 import { MiniMap } from "./mini-map";
 import { MISSION_MAPS, type MissionMapId } from "./map-content";
 import { EXTRACTION_POSITIONS } from "./game-config";
+import { EarthGlobe } from "./earth-globe";
 
 type Screen = "command" | "mission" | "debrief";
 
@@ -20,6 +21,9 @@ type Mission = {
   status: "PLAYABLE" | "SCANNING";
   reward: string;
   enemies: string;
+  enemyTypes: Array<"hunter" | "sentry">;
+  latitude: number;
+  longitude: number;
 };
 
 const MISSIONS: Mission[] = [
@@ -34,6 +38,9 @@ const MISSIONS: Mission[] = [
     status: "PLAYABLE",
     reward: "280–440 CR",
     enemies: "HUNTERS / SENTRIES",
+    enemyTypes: ["hunter", "sentry"],
+    latitude: -23.5513,
+    longitude: -46.6344,
   },
   {
     id: "tokyo",
@@ -46,6 +53,9 @@ const MISSIONS: Mission[] = [
     status: "PLAYABLE",
     reward: "420–620 CR",
     enemies: "HUNTERS / SENTRIES",
+    enemyTypes: ["hunter", "sentry"],
+    latitude: 35.6595,
+    longitude: 139.7005,
   },
   {
     id: "cairo",
@@ -58,6 +68,9 @@ const MISSIONS: Mission[] = [
     status: "SCANNING",
     reward: "CLASSIFIED",
     enemies: "SIGNAL LOST",
+    enemyTypes: ["hunter", "sentry"],
+    latitude: 30.0444,
+    longitude: 31.2357,
   },
   {
     id: "paris",
@@ -70,6 +83,9 @@ const MISSIONS: Mission[] = [
     status: "SCANNING",
     reward: "CLASSIFIED",
     enemies: "SIGNAL LOST",
+    enemyTypes: ["hunter", "sentry"],
+    latitude: 48.8674,
+    longitude: 2.3639,
   },
 ];
 
@@ -107,6 +123,21 @@ const EMPTY_HUD: MissionHud = {
 function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60);
   return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function EnemyTypeIcon({ type }: { type: "hunter" | "sentry" }) {
+  return type === "hunter" ? (
+    <svg viewBox="0 0 40 40" aria-hidden="true">
+      <path d="M7 10 20 4l13 6-4 21-9 5-9-5L7 10Z" />
+      <path d="m12 15 8 5 8-5M20 20v10M13 27l7 3 7-3" />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 40 40" aria-hidden="true">
+      <path d="M9 9h22v22H9z" />
+      <circle cx="20" cy="20" r="7" />
+      <path d="M20 4v5M20 31v5M4 20h5M31 20h5" />
+    </svg>
+  );
 }
 
 function MissionStage({
@@ -310,71 +341,32 @@ export default function Home() {
       </header>
 
       <section className="command-content">
-        <div className="mission-index">
-          <span className="section-tag">GLOBAL OCCUPATION MAP</span>
-          <h1>CHOOSE A<br /><em>DROP ZONE</em></h1>
-          <p>Alien carrier signals are active in four population centers. Two corridors are open for deployment.</p>
-
-          <div className="mission-list" role="list">
-            {MISSIONS.map((item, index) => (
-              <button
-                key={item.id}
-                className={selectedMission === item.id ? "selected" : ""}
-                onClick={() => setSelectedMission(item.id)}
-                role="listitem"
-              >
-                <span>0{index + 1}</span>
-                <div><strong>{item.city}</strong><small>{item.zone}</small></div>
-                <em data-status={item.status}>{item.status}</em>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="earth-display" aria-label="Stylized globe showing occupied cities">
+        <div className="earth-display">
           <div className="orbit orbit-one" />
           <div className="orbit orbit-two" />
-          <div className="earth">
-            <div className="earth-grid" />
-            <div className="continent c-one" />
-            <div className="continent c-two" />
-            <div className="continent c-three" />
-            <button className={`world-node node-one ${selectedMission === "sao-paulo" ? "active" : ""}`} aria-label="Select São Paulo mission" onClick={() => setSelectedMission("sao-paulo")}><i /><span>SÃO PAULO</span></button>
-            <button className={`world-node node-two ${selectedMission === "tokyo" ? "active" : ""}`} aria-label="Select Tokyo mission" onClick={() => setSelectedMission("tokyo")}><i /><span>TOKYO</span></button>
-            <button className="world-node node-three" aria-label="Cairo scanning"><i /><span>CAIRO</span></button>
-          </div>
+          <div className="map-heading"><span className="section-tag">GLOBAL OCCUPATION MAP</span><h1>SELECT DROP ZONE</h1></div>
+          <EarthGlobe locations={MISSIONS} selectedId={selectedMission} onSelect={setSelectedMission} />
           <div className="earth-caption"><span>INVASION DAY</span><strong>017</strong></div>
         </div>
 
-        <aside className="mission-brief">
-          <div className="brief-heading"><span>{mission.status}</span><small>{mission.coordinates}</small></div>
-          <span className="section-tag">SELECTED OPERATION</span>
+        <aside className="zone-selection" aria-live="polite">
+          <div className="zone-status"><i data-status={mission.status} /><span>{mission.status}</span><small>{mission.coordinates}</small></div>
+          <span className="section-tag">SELECTED DROP ZONE</span>
           <h2>{mission.zone}</h2>
-          <p className="city-label">{mission.city} · {mission.country}</p>
-
-          <div className="district-preview">
-            <div className="preview-sky"><i className="carrier" /></div>
-            <div className="preview-building p-one" />
-            <div className="preview-building p-two" />
-            <div className="preview-building p-three" />
-            <div className="preview-road" />
-            <span>LIVE GEOMETRY FEED</span>
+          <p>{mission.city} · {mission.country}</p>
+          <div className="enemy-types">
+            <span className="enemy-label">ENEMY SIGNALS</span>
+            <div>
+              {mission.enemyTypes.map((type) => (
+                <span className={`enemy-type ${type}`} key={type} title={type === "hunter" ? "Hunter" : "Sentry"}>
+                  <EnemyTypeIcon type={type} />
+                  <b>{type.toUpperCase()}</b>
+                </span>
+              ))}
+            </div>
           </div>
-
-          <div className="brief-data">
-            <div><span>THREAT</span><strong>{mission.threat}</strong></div>
-            <div><span>HOSTILES</span><strong>{mission.enemies}</strong></div>
-            <div><span>OBJECTIVE</span><strong>DISMANTLE 8 UNITS</strong></div>
-            <div><span>REWARD</span><strong>{mission.reward}</strong></div>
-          </div>
-
-          <button className="loadout-strip" onClick={() => setLoadoutOpen(true)}>
-            <span>ACTIVE LOADOUT</span>
-            <strong>{WEAPONS.find((item) => item.id === weapon)?.name}</strong>
-            <em>{SKINS.find((item) => item.id === skin)?.name} · EDIT</em>
-          </button>
           <button className="primary-action" disabled={mission.status !== "PLAYABLE"} onClick={() => setBriefing(true)}>
-            {mission.status === "PLAYABLE" ? "PREPARE DEPLOYMENT" : "ZONE UNAVAILABLE"}<span>→</span>
+            {mission.status === "PLAYABLE" ? "SELECT THIS ZONE" : "ZONE UNAVAILABLE"}<span>→</span>
           </button>
         </aside>
       </section>
