@@ -147,8 +147,16 @@ export function EarthGlobe({
     sun.position.set(-2.8, 2.6, 4.2);
     scene.add(sun);
 
+    let resizeFrame = 0;
+    let renderedWidth = 0;
+    let renderedHeight = 0;
     const resize = () => {
       const { width, height } = mount.getBoundingClientRect();
+      const nextWidth = Math.round(width);
+      const nextHeight = Math.round(height);
+      if (nextWidth === renderedWidth && nextHeight === renderedHeight) return;
+      renderedWidth = nextWidth;
+      renderedHeight = nextHeight;
       renderer.setSize(width, height, false);
       camera.aspect = width / Math.max(height, 1);
       camera.updateProjectionMatrix();
@@ -175,12 +183,16 @@ export function EarthGlobe({
       }));
     };
     drawRef.current = draw;
-    const resizeObserver = new ResizeObserver(resize);
+    const resizeObserver = new ResizeObserver(() => {
+      window.cancelAnimationFrame(resizeFrame);
+      resizeFrame = window.requestAnimationFrame(resize);
+    });
     resizeObserver.observe(mount);
     resize();
 
     return () => {
       window.cancelAnimationFrame(animationFrameRef.current);
+      window.cancelAnimationFrame(resizeFrame);
       resizeObserver.disconnect();
       texture?.dispose();
       globe.geometry.dispose();
