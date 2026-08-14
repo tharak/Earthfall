@@ -24,6 +24,11 @@ export type MissionDefinition = {
   longitude: number;
 };
 
+export type GlobeLocation = Pick<
+  MissionDefinition,
+  "id" | "city" | "latitude" | "longitude" | "status"
+>;
+
 export type MapBuilding = {
   id: number;
   name?: string;

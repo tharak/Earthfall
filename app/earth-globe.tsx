@@ -1,15 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement } from "react";
 import * as THREE from "three";
-
-export type GlobeLocation = {
-  id: string;
-  city: string;
-  latitude: number;
-  longitude: number;
-  status: "PLAYABLE" | "SCANNING";
-};
+import type { GlobeLocation } from "./game-types";
 
 type ProjectedLocation = GlobeLocation & {
   x: number;
@@ -29,7 +22,7 @@ const LAND_MASSES: Array<Array<[number, number]>> = [
   [[47, -13], [51, -26], [44, -24]],
 ];
 
-function createEarthTexture() {
+function createEarthTexture(): THREE.CanvasTexture | null {
   const canvas = document.createElement("canvas");
   canvas.width = 2048;
   canvas.height = 1024;
@@ -82,7 +75,7 @@ function createEarthTexture() {
   return texture;
 }
 
-function globePoint(latitude: number, longitude: number) {
+function globePoint(latitude: number, longitude: number): THREE.Vector3 {
   const lat = THREE.MathUtils.degToRad(latitude);
   const lon = THREE.MathUtils.degToRad(longitude);
   return new THREE.Vector3(
@@ -100,7 +93,7 @@ export function EarthGlobe({
   locations: GlobeLocation[];
   selectedId: string;
   onSelect: (id: string) => void;
-}) {
+}): ReactElement {
   const mountRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<THREE.Mesh | null>(null);
   const drawRef = useRef<() => void>(() => undefined);
@@ -206,13 +199,13 @@ export function EarthGlobe({
     };
   }, [locations]);
 
-  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>): void => {
     if ((event.target as HTMLElement).closest("button")) return;
     dragRef.current = { active: true, moved: false, x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
-  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>): void => {
     const drag = dragRef.current;
     if (!drag.active) return;
     const deltaX = event.clientX - drag.x;
@@ -226,7 +219,7 @@ export function EarthGlobe({
     animationFrameRef.current = window.requestAnimationFrame(drawRef.current);
   };
 
-  const stopDragging = () => {
+  const stopDragging = (): void => {
     dragRef.current.active = false;
   };
 

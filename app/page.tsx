@@ -1,32 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement } from "react";
 import { GameEngine } from "./game-engine";
-import type { MissionHud, MissionMapId, MissionResult, SkinId, TouchInput, WeaponId } from "./game-types";
+import type { EnemyKind, MissionDefinition, MissionHud, MissionMapId, MissionResult, SkinId, TouchInput, WeaponId } from "./game-types";
 import { MiniMap } from "./mini-map";
 import { MISSION_MAPS } from "./map-content";
-import { EXTRACTION_POSITIONS } from "./game-config";
+import {
+  EXTRACTION_POSITIONS,
+  MISSION_SECONDS,
+  PLAYER_MAX_HEALTH,
+  PLAYER_START_POSITION,
+  REQUIRED_KILLS,
+  TOUCH_STICK_RADIUS_PX,
+  TOUCH_STICK_THRESHOLD_PX,
+  WEAPONS as WEAPON_CONFIG,
+} from "./game-config";
 import { EarthGlobe } from "./earth-globe";
 
 type Screen = "command" | "mission" | "debrief";
 
-type Mission = {
-  id: string;
-  mapId: MissionMapId | null;
-  city: string;
-  country: string;
-  zone: string;
-  coordinates: string;
-  threat: string;
-  status: "PLAYABLE" | "SCANNING";
-  reward: string;
-  enemies: string;
-  enemyTypes: Array<"hunter" | "sentry">;
-  latitude: number;
-  longitude: number;
-};
-
-const MISSIONS: Mission[] = [
+const MISSIONS: MissionDefinition[] = [
   {
     id: "sao-paulo",
     mapId: "sao-paulo",
@@ -89,9 +82,9 @@ const MISSIONS: Mission[] = [
   },
 ];
 
-const WEAPONS: Array<{ id: WeaponId; name: string; type: string; stat: string; detail: string }> = [
-  { id: "arc", name: "AR-7 ARC RIFLE", type: "PRECISION", stat: "42 DMG · 12 MAG", detail: "Measured shots. Heavy machine disruption." },
-  { id: "pulse", name: "PC-3 PULSE CARBINE", type: "SUPPRESSION", stat: "24 DMG · 24 MAG", detail: "Fast cadence. Built for close pressure." },
+const WEAPON_OPTIONS: Array<{ id: WeaponId; name: string; type: string; stat: string; detail: string }> = [
+  { id: "arc", name: "AR-7 ARC RIFLE", type: "PRECISION", stat: `${WEAPON_CONFIG.arc.damage} DMG · ${WEAPON_CONFIG.arc.magazine} MAG`, detail: "Measured shots. Heavy machine disruption." },
+  { id: "pulse", name: "PC-3 PULSE CARBINE", type: "SUPPRESSION", stat: `${WEAPON_CONFIG.pulse.damage} DMG · ${WEAPON_CONFIG.pulse.magazine} MAG`, detail: "Fast cadence. Built for close pressure." },
 ];
 
 const SKINS: Array<{ id: SkinId; name: string; note: string; swatch: string }> = [
@@ -101,26 +94,26 @@ const SKINS: Array<{ id: SkinId; name: string; note: string; swatch: string }> =
 ];
 
 const EMPTY_HUD: MissionHud = {
-  health: 100,
-  ammo: 12,
-  magazine: 12,
+  health: PLAYER_MAX_HEALTH,
+  ammo: WEAPON_CONFIG.arc.magazine,
+  magazine: WEAPON_CONFIG.arc.magazine,
   kills: 0,
-  requiredKills: 8,
+  requiredKills: REQUIRED_KILLS,
   salvage: 0,
-  timeLeft: 180,
+  timeLeft: MISSION_SECONDS,
   extractionUnlocked: true,
   extractionProgress: 0,
   reloading: false,
   message: "",
   tacticalMap: {
-    player: { x: 0, z: 100, heading: 0 },
+    player: { x: PLAYER_START_POSITION[0], z: PLAYER_START_POSITION[1], heading: 0 },
     enemies: [],
     pickups: [],
     extractions: EXTRACTION_POSITIONS.map(([x, z]) => ({ x, z })),
   },
 };
 
-function capturePointer(element: HTMLElement, pointerId: number) {
+function capturePointer(element: HTMLElement, pointerId: number): void {
   try {
     element.setPointerCapture(pointerId);
   } catch {
@@ -128,7 +121,7 @@ function capturePointer(element: HTMLElement, pointerId: number) {
   }
 }
 
-function EnemyTypeIcon({ type }: { type: "hunter" | "sentry" }) {
+function EnemyTypeIcon({ type }: { type: EnemyKind }): ReactElement {
   return type === "hunter" ? (
     <svg viewBox="0 0 40 40" aria-hidden="true">
       <path d="M7 10 20 4l13 6-4 21-9 5-9-5L7 10Z" />
@@ -150,12 +143,12 @@ function MissionStage({
   onEnd,
   onAbort,
 }: {
-  mission: Mission & { mapId: MissionMapId };
+  mission: MissionDefinition & { mapId: MissionMapId };
   weapon: WeaponId;
   skin: SkinId;
   onEnd: (result: MissionResult) => void;
   onAbort: () => void;
-}) {
+}): ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const touchRef = useRef<TouchInput>({
     up: false,
@@ -199,19 +192,19 @@ function MissionStage({
     );
   }
 
-  const setTouch = (key: keyof TouchInput, value: boolean) => {
+  const setTouch = (key: keyof TouchInput, value: boolean): void => {
     touchRef.current[key] = value;
   };
 
-  const updateStick = (clientX: number, clientY: number) => {
+  const updateStick = (clientX: number, clientY: number): void => {
     const origin = stickPointerRef.current;
     const rawX = clientX - origin.x;
     const rawY = clientY - origin.y;
     const distance = Math.hypot(rawX, rawY);
-    const scale = distance > 42 ? 42 / distance : 1;
+    const scale = distance > TOUCH_STICK_RADIUS_PX ? TOUCH_STICK_RADIUS_PX / distance : 1;
     const dx = rawX * scale;
     const dy = rawY * scale;
-    const threshold = 11;
+    const threshold = TOUCH_STICK_THRESHOLD_PX;
     touchRef.current.left = dx < -threshold;
     touchRef.current.right = dx > threshold;
     touchRef.current.up = dy < -threshold;
@@ -219,7 +212,7 @@ function MissionStage({
     setStick({ active: true, x: origin.x, y: origin.y, dx, dy });
   };
 
-  const releaseStick = (pointerId: number) => {
+  const releaseStick = (pointerId: number): void => {
     if (stickPointerRef.current.id !== pointerId) return;
     stickPointerRef.current.id = null;
     touchRef.current.up = false;
@@ -229,7 +222,7 @@ function MissionStage({
     setStick((current) => ({ ...current, active: false, dx: 0, dy: 0 }));
   };
 
-  const onTouchStart = (event: ReactPointerEvent<HTMLElement>) => {
+  const onTouchStart = (event: ReactPointerEvent<HTMLElement>): void => {
     if (event.pointerType === "mouse" || (event.target as HTMLElement).closest("button, a")) return;
     if (stickPointerRef.current.id !== null) return;
     stickPointerRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
@@ -237,7 +230,7 @@ function MissionStage({
     setStick({ active: true, x: event.clientX, y: event.clientY, dx: 0, dy: 0 });
   };
 
-  const onTouchMove = (event: ReactPointerEvent<HTMLElement>) => {
+  const onTouchMove = (event: ReactPointerEvent<HTMLElement>): void => {
     if (stickPointerRef.current.id !== event.pointerId) return;
     updateStick(event.clientX, event.clientY);
   };
@@ -262,7 +255,7 @@ function MissionStage({
         </aside>
 
         <aside className="ammo-panel">
-          <span>{WEAPONS.find((item) => item.id === weapon)?.name}</span>
+          <span>{WEAPON_OPTIONS.find((item) => item.id === weapon)?.name}</span>
           <strong>{hud.reloading ? "--" : hud.ammo}<small> / {hud.magazine}</small></strong>
           <em>{hud.reloading ? "RELOADING" : "R · RELOAD"}</em>
         </aside>
@@ -298,7 +291,199 @@ function MissionStage({
   );
 }
 
-export default function Home() {
+function DebriefScreen({ result, onReturn }: { result: MissionResult; onReturn: () => void }): ReactElement {
+  return (
+    <main className={`debrief-shell ${result.success ? "success" : "failure"}`}>
+      <div className="debrief-scan" />
+      <section className="debrief-card">
+        <span className="eyebrow">OPERATION 001 · CLOSED</span>
+        <div className="debrief-mark">{result.success ? "✓" : "×"}</div>
+        <h1>{result.success ? "EXTRACTION CONFIRMED" : "OPERATIVE SIGNAL LOST"}</h1>
+        <p>{result.success ? "Your salvage crossed the transfer field and has been banked." : result.reason === "timeout" ? "The carrier reinforced the zone before extraction." : "Unsecured salvage was abandoned inside the occupation zone."}</p>
+        <div className="debrief-stats">
+          <div><span>MACHINES</span><strong>{result.kills}</strong></div>
+          <div><span>RECOVERED</span><strong>{result.success ? result.salvage : 0} CR</strong></div>
+          <div><span>LOST</span><strong>{result.success ? 0 : result.salvage} CR</strong></div>
+        </div>
+        <button className="primary-action" onClick={onReturn}>RETURN TO COMMAND <span>→</span></button>
+      </section>
+    </main>
+  );
+}
+
+type LoadoutProps = {
+  weapon: WeaponId;
+  skin: SkinId;
+  onWeaponChange: (weapon: WeaponId) => void;
+  onSkinChange: (skin: SkinId) => void;
+};
+
+function LoadoutModal({ weapon, skin, onWeaponChange, onSkinChange, onClose }: LoadoutProps & { onClose: () => void }): ReactElement {
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="loadout-modal" role="dialog" aria-modal="true" aria-labelledby="loadout-title">
+        <button className="modal-close" onClick={onClose} aria-label="Close loadout">×</button>
+        <span className="section-tag">OPERATIVE CONFIGURATION</span>
+        <h2 id="loadout-title">LOADOUT</h2>
+        <p>Combat equipment changes how you fight. Suit finishes are presentation only.</p>
+        <div className="loadout-columns">
+          <div>
+            <span className="eyebrow">PRIMARY WEAPON</span>
+            {WEAPON_OPTIONS.map((item) => (
+              <button key={item.id} className={`gear-card ${weapon === item.id ? "selected" : ""}`} onClick={() => onWeaponChange(item.id)}>
+                <i className={`weapon-shape ${item.id}`} />
+                <span><small>{item.type}</small><strong>{item.name}</strong><em>{item.stat}</em><p>{item.detail}</p></span>
+              </button>
+            ))}
+          </div>
+          <div>
+            <span className="eyebrow">SUIT FINISH · COSMETIC ONLY</span>
+            {SKINS.map((item) => (
+              <button key={item.id} className={`skin-card ${skin === item.id ? "selected" : ""}`} onClick={() => onSkinChange(item.id)}>
+                <i className={item.swatch} /><span><strong>{item.name}</strong><small>{item.note}</small></span>
+              </button>
+            ))}
+            <div className="commerce-note"><strong>DIRECT PURCHASES ONLY</strong><span>No random rewards. No gameplay advantage.</span></div>
+          </div>
+        </div>
+        <button className="primary-action" onClick={onClose}>CONFIRM LOADOUT <span>✓</span></button>
+      </section>
+    </div>
+  );
+}
+
+function DeploymentModal({ mission, weapon, skin, onWeaponChange, onSkinChange, onCancel, onDeploy }: LoadoutProps & {
+  mission: MissionDefinition;
+  onCancel: () => void;
+  onDeploy: () => void;
+}): ReactElement {
+  return (
+    <div className="modal-backdrop briefing-backdrop">
+      <section className="deployment-modal" role="dialog" aria-modal="true" aria-labelledby="deploy-title">
+        <div className="deployment-number">0{MISSIONS.findIndex((item) => item.id === mission.id) + 1}</div>
+        <span className="section-tag">MISSION LOADOUT</span>
+        <h2 id="deploy-title">CHOOSE YOUR EQUIPMENT</h2>
+        <p>Select your weapon and suit before entering the occupation zone.</p>
+        <div className="deploy-zone-summary">
+          <span>DROP ZONE<strong>{mission.zone} · {mission.city}</strong></span>
+          <span>OBJECTIVE<strong>DISMANTLE {REQUIRED_KILLS} MACHINES</strong></span>
+        </div>
+        <div className="deployment-picker">
+          <section>
+            <span className="eyebrow">PRIMARY WEAPON</span>
+            <div className="deploy-weapon-options">
+              {WEAPON_OPTIONS.map((item) => (
+                <button key={item.id} className={`deploy-weapon ${weapon === item.id ? "selected" : ""}`} aria-pressed={weapon === item.id} onClick={() => onWeaponChange(item.id)}>
+                  <i className={`weapon-shape ${item.id}`} />
+                  <span><small>{item.type}</small><strong>{item.name}</strong><em>{item.stat}</em></span>
+                </button>
+              ))}
+            </div>
+          </section>
+          <section>
+            <span className="eyebrow">SUIT FINISH</span>
+            <div className="deploy-skin-options">
+              {SKINS.map((item) => (
+                <button key={item.id} className={`deploy-skin ${skin === item.id ? "selected" : ""}`} aria-pressed={skin === item.id} onClick={() => onSkinChange(item.id)}>
+                  <i className={item.swatch} />
+                  <span><strong>{item.name}</strong><small>{item.note}</small></span>
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+        <div className="deployment-actions">
+          <button onClick={onCancel}>CANCEL</button>
+          <button className="primary-action" onClick={onDeploy}>DEPLOY NOW <span>→</span></button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function CommandScreen({
+  mission,
+  selectedMission,
+  credits,
+  weapon,
+  skin,
+  loadoutOpen,
+  briefingOpen,
+  onMissionSelect,
+  onLoadoutOpen,
+  onLoadoutClose,
+  onBriefingOpen,
+  onBriefingClose,
+  onWeaponChange,
+  onSkinChange,
+  onDeploy,
+}: LoadoutProps & {
+  mission: MissionDefinition;
+  selectedMission: string;
+  credits: number;
+  loadoutOpen: boolean;
+  briefingOpen: boolean;
+  onMissionSelect: (missionId: string) => void;
+  onLoadoutOpen: () => void;
+  onLoadoutClose: () => void;
+  onBriefingOpen: () => void;
+  onBriefingClose: () => void;
+  onDeploy: () => void;
+}): ReactElement {
+  return (
+    <main className="command-shell">
+      <div className="command-grid" />
+      <header className="command-header">
+        <div className="wordmark"><span>EARTHFALL</span><strong>PROTOCOL</strong></div>
+        <nav aria-label="Primary navigation">
+          <button className="active">COMMAND</button>
+          <button onClick={onLoadoutOpen}>LOADOUT</button>
+          <button disabled>ARCHIVE</button>
+        </nav>
+        <div className="account-status"><span>BANKED CREDITS</span><strong>◈ {credits.toLocaleString("en-US")}</strong></div>
+      </header>
+
+      <section className="command-content">
+        <div className="earth-display">
+          <div className="orbit orbit-one" />
+          <div className="orbit orbit-two" />
+          <div className="map-heading"><span className="section-tag">GLOBAL OCCUPATION MAP</span><h1>SELECT DROP ZONE</h1></div>
+          <EarthGlobe locations={MISSIONS} selectedId={selectedMission} onSelect={onMissionSelect} />
+          <div className="earth-caption"><span>INVASION DAY</span><strong>017</strong></div>
+        </div>
+
+        <aside className="zone-selection" aria-live="polite">
+          <div className="zone-title"><i data-status={mission.status} /><h2>{mission.zone}</h2></div>
+          <div className="zone-meta"><span>{mission.city} · {mission.country}</span><small>{mission.coordinates}</small></div>
+          <div className="enemy-types">
+            <div>
+              {mission.enemyTypes.map((type) => (
+                <span className={`enemy-type ${type}`} key={type} title={type === "hunter" ? "Hunter" : "Sentry"}>
+                  <EnemyTypeIcon type={type} />
+                  <b>{type.toUpperCase()}</b>
+                </span>
+              ))}
+            </div>
+          </div>
+          <button className="primary-action" disabled={mission.status !== "PLAYABLE"} onClick={onBriefingOpen}>
+            {mission.status === "PLAYABLE" ? "SELECT THIS ZONE" : "ZONE UNAVAILABLE"}<span>→</span>
+          </button>
+        </aside>
+      </section>
+
+      <footer className="command-footer">
+        <span>NETWORK: <b>STABLE</b></span>
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">MAP DATA © OPENSTREETMAP CONTRIBUTORS · ODBL</a>
+        <span>BUILD 0.1.0</span>
+      </footer>
+
+      {loadoutOpen && <LoadoutModal weapon={weapon} skin={skin} onWeaponChange={onWeaponChange} onSkinChange={onSkinChange} onClose={onLoadoutClose} />}
+      {briefingOpen && <DeploymentModal mission={mission} weapon={weapon} skin={skin} onWeaponChange={onWeaponChange} onSkinChange={onSkinChange} onCancel={onBriefingClose} onDeploy={onDeploy} />}
+    </main>
+  );
+}
+
+export default function Home(): ReactElement {
   const [screen, setScreen] = useState<Screen>("command");
   const [selectedMission, setSelectedMission] = useState(MISSIONS[0].id);
   const [weapon, setWeapon] = useState<WeaponId>("arc");
@@ -337,146 +522,26 @@ export default function Home() {
   }
 
   if (screen === "debrief" && result) {
-    return (
-      <main className={`debrief-shell ${result.success ? "success" : "failure"}`}>
-        <div className="debrief-scan" />
-        <section className="debrief-card">
-          <span className="eyebrow">OPERATION 001 · CLOSED</span>
-          <div className="debrief-mark">{result.success ? "✓" : "×"}</div>
-          <h1>{result.success ? "EXTRACTION CONFIRMED" : "OPERATIVE SIGNAL LOST"}</h1>
-          <p>{result.success ? "Your salvage crossed the transfer field and has been banked." : result.reason === "timeout" ? "The carrier reinforced the zone before extraction." : "Unsecured salvage was abandoned inside the occupation zone."}</p>
-          <div className="debrief-stats">
-            <div><span>MACHINES</span><strong>{result.kills}</strong></div>
-            <div><span>RECOVERED</span><strong>{result.success ? result.salvage : 0} CR</strong></div>
-            <div><span>LOST</span><strong>{result.success ? 0 : result.salvage} CR</strong></div>
-          </div>
-          <button className="primary-action" onClick={() => { setScreen("command"); setResult(null); }}>RETURN TO COMMAND <span>→</span></button>
-        </section>
-      </main>
-    );
+    return <DebriefScreen result={result} onReturn={() => { setScreen("command"); setResult(null); }} />;
   }
 
   return (
-    <main className="command-shell">
-      <div className="command-grid" />
-      <header className="command-header">
-        <div className="wordmark"><span>EARTHFALL</span><strong>PROTOCOL</strong></div>
-        <nav aria-label="Primary navigation">
-          <button className="active">COMMAND</button>
-          <button onClick={() => setLoadoutOpen(true)}>LOADOUT</button>
-          <button disabled>ARCHIVE</button>
-        </nav>
-        <div className="account-status"><span>BANKED CREDITS</span><strong>◈ {credits.toLocaleString("en-US")}</strong></div>
-      </header>
-
-      <section className="command-content">
-        <div className="earth-display">
-          <div className="orbit orbit-one" />
-          <div className="orbit orbit-two" />
-          <div className="map-heading"><span className="section-tag">GLOBAL OCCUPATION MAP</span><h1>SELECT DROP ZONE</h1></div>
-          <EarthGlobe locations={MISSIONS} selectedId={selectedMission} onSelect={setSelectedMission} />
-          <div className="earth-caption"><span>INVASION DAY</span><strong>017</strong></div>
-        </div>
-
-        <aside className="zone-selection" aria-live="polite">
-          <div className="zone-title"><i data-status={mission.status} /><h2>{mission.zone}</h2></div>
-          <div className="zone-meta"><span>{mission.city} · {mission.country}</span><small>{mission.coordinates}</small></div>
-          <div className="enemy-types">
-            <div>
-              {mission.enemyTypes.map((type) => (
-                <span className={`enemy-type ${type}`} key={type} title={type === "hunter" ? "Hunter" : "Sentry"}>
-                  <EnemyTypeIcon type={type} />
-                  <b>{type.toUpperCase()}</b>
-                </span>
-              ))}
-            </div>
-          </div>
-          <button className="primary-action" disabled={mission.status !== "PLAYABLE"} onClick={() => setBriefing(true)}>
-            {mission.status === "PLAYABLE" ? "SELECT THIS ZONE" : "ZONE UNAVAILABLE"}<span>→</span>
-          </button>
-        </aside>
-      </section>
-
-      <footer className="command-footer">
-        <span>NETWORK: <b>STABLE</b></span>
-        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">MAP DATA © OPENSTREETMAP CONTRIBUTORS · ODBL</a>
-        <span>BUILD 0.1.0</span>
-      </footer>
-
-      {loadoutOpen && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setLoadoutOpen(false); }}>
-          <section className="loadout-modal" role="dialog" aria-modal="true" aria-labelledby="loadout-title">
-            <button className="modal-close" onClick={() => setLoadoutOpen(false)} aria-label="Close loadout">×</button>
-            <span className="section-tag">OPERATIVE CONFIGURATION</span>
-            <h2 id="loadout-title">LOADOUT</h2>
-            <p>Combat equipment changes how you fight. Suit finishes are presentation only.</p>
-            <div className="loadout-columns">
-              <div>
-                <span className="eyebrow">PRIMARY WEAPON</span>
-                {WEAPONS.map((item) => (
-                  <button key={item.id} className={`gear-card ${weapon === item.id ? "selected" : ""}`} onClick={() => setWeapon(item.id)}>
-                    <i className={`weapon-shape ${item.id}`} />
-                    <span><small>{item.type}</small><strong>{item.name}</strong><em>{item.stat}</em><p>{item.detail}</p></span>
-                  </button>
-                ))}
-              </div>
-              <div>
-                <span className="eyebrow">SUIT FINISH · COSMETIC ONLY</span>
-                {SKINS.map((item) => (
-                  <button key={item.id} className={`skin-card ${skin === item.id ? "selected" : ""}`} onClick={() => setSkin(item.id)}>
-                    <i className={item.swatch} /><span><strong>{item.name}</strong><small>{item.note}</small></span>
-                  </button>
-                ))}
-                <div className="commerce-note"><strong>DIRECT PURCHASES ONLY</strong><span>No random rewards. No gameplay advantage.</span></div>
-              </div>
-            </div>
-            <button className="primary-action" onClick={() => setLoadoutOpen(false)}>CONFIRM LOADOUT <span>✓</span></button>
-          </section>
-        </div>
-      )}
-
-      {briefing && (
-        <div className="modal-backdrop briefing-backdrop">
-          <section className="deployment-modal" role="dialog" aria-modal="true" aria-labelledby="deploy-title">
-            <div className="deployment-number">0{MISSIONS.findIndex((item) => item.id === mission.id) + 1}</div>
-            <span className="section-tag">MISSION LOADOUT</span>
-            <h2 id="deploy-title">CHOOSE YOUR EQUIPMENT</h2>
-            <p>Select your weapon and suit before entering the occupation zone.</p>
-            <div className="deploy-zone-summary">
-              <span>DROP ZONE<strong>{mission.zone} · {mission.city}</strong></span>
-              <span>OBJECTIVE<strong>DISMANTLE 8 MACHINES</strong></span>
-            </div>
-            <div className="deployment-picker">
-              <section>
-                <span className="eyebrow">PRIMARY WEAPON</span>
-                <div className="deploy-weapon-options">
-                  {WEAPONS.map((item) => (
-                    <button key={item.id} className={`deploy-weapon ${weapon === item.id ? "selected" : ""}`} aria-pressed={weapon === item.id} onClick={() => setWeapon(item.id)}>
-                      <i className={`weapon-shape ${item.id}`} />
-                      <span><small>{item.type}</small><strong>{item.name}</strong><em>{item.stat}</em></span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-              <section>
-                <span className="eyebrow">SUIT FINISH</span>
-                <div className="deploy-skin-options">
-                  {SKINS.map((item) => (
-                    <button key={item.id} className={`deploy-skin ${skin === item.id ? "selected" : ""}`} aria-pressed={skin === item.id} onClick={() => setSkin(item.id)}>
-                      <i className={item.swatch} />
-                      <span><strong>{item.name}</strong><small>{item.note}</small></span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            </div>
-            <div className="deployment-actions">
-              <button onClick={() => setBriefing(false)}>CANCEL</button>
-              <button className="primary-action" onClick={() => { setBriefing(false); setScreen("mission"); }}>DEPLOY NOW <span>→</span></button>
-            </div>
-          </section>
-        </div>
-      )}
-    </main>
+    <CommandScreen
+      mission={mission}
+      selectedMission={selectedMission}
+      credits={credits}
+      weapon={weapon}
+      skin={skin}
+      loadoutOpen={loadoutOpen}
+      briefingOpen={briefing}
+      onMissionSelect={setSelectedMission}
+      onLoadoutOpen={() => setLoadoutOpen(true)}
+      onLoadoutClose={() => setLoadoutOpen(false)}
+      onBriefingOpen={() => setBriefing(true)}
+      onBriefingClose={() => setBriefing(false)}
+      onWeaponChange={setWeapon}
+      onSkinChange={setSkin}
+      onDeploy={() => { setBriefing(false); setScreen("mission"); }}
+    />
   );
 }

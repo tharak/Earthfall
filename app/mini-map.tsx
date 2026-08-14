@@ -1,23 +1,23 @@
-import { memo } from "react";
+import { memo, type ReactElement } from "react";
 import type { RealMapData, TacticalMapState } from "./game-types";
 
 const VIEW_RADIUS_METERS = 200;
 const VIEW_SIZE = 200;
 
-function mapPoint(xMeters: number, zMeters: number) {
+function mapPoint(xMeters: number, zMeters: number): readonly [number, number] {
   const scale = VIEW_SIZE / (VIEW_RADIUS_METERS * 2);
   return [VIEW_SIZE / 2 + xMeters * scale, VIEW_SIZE / 2 - zMeters * scale] as const;
 }
 
-function worldPoint(x: number, z: number) {
+function worldPoint(x: number, z: number): readonly [number, number] {
   return mapPoint(x, z);
 }
 
-function intersectsView(points: Array<[number, number]>) {
+function intersectsView(points: Array<[number, number]>): boolean {
   return points.some(([x, z]) => Math.abs(x) <= VIEW_RADIUS_METERS && Math.abs(z) <= VIEW_RADIUS_METERS);
 }
 
-const MiniMapBase = memo(function MiniMapBase({ mapData }: { mapData: RealMapData }) {
+const MiniMapBase = memo(function MiniMapBase({ mapData }: { mapData: RealMapData }): ReactElement {
   const buildings = mapData.buildings.filter((building) => intersectsView(building.footprint));
   const roads = mapData.roads.filter((road) => intersectsView(road.path));
   return (
@@ -60,7 +60,7 @@ const MiniMapBase = memo(function MiniMapBase({ mapData }: { mapData: RealMapDat
   );
 });
 
-export function MiniMap({ state, mapData, locationName }: { state: TacticalMapState; mapData: RealMapData; locationName: string }) {
+export function MiniMap({ state, mapData, locationName }: { state: TacticalMapState; mapData: RealMapData; locationName: string }): ReactElement {
   const [playerX, playerY] = worldPoint(state.player.x, state.player.z);
 
   return (
