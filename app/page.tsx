@@ -266,6 +266,24 @@ function MissionStage({
           <em>{hud.reloading ? "RELOADING" : "R · RELOAD"}</em>
         </aside>
 
+        {hud.extractionUnlocked && (
+          <button
+            className="desktop-extract"
+            onPointerDown={(event) => {
+              event.stopPropagation();
+              capturePointer(event.currentTarget, event.pointerId);
+              setTouch("extract", true);
+            }}
+            onPointerUp={(event) => {
+              event.stopPropagation();
+              setTouch("extract", false);
+            }}
+            onPointerCancel={() => setTouch("extract", false)}
+          >
+            EXTRACT {hud.salvage}
+          </button>
+        )}
+
         <div className="touch-controls" aria-label="Touch controls">
           <div className="touch-actions">
             <button onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("reload", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("reload", false); }} onPointerCancel={() => setTouch("reload", false)}>RELOAD</button>

@@ -284,7 +284,9 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .mini-map-contacts .extraction { fill: none; stroke: rgba(98, 255, 182, 0.28); stroke-width: 1; stroke-dasharray: 2 2; }
 .mini-map-contacts .extraction.active { stroke: var(--green); filter: drop-shadow(0 0 2px var(--green)); }
 .mini-map-contacts .player { fill: #eaffff; stroke: var(--cyan); stroke-width: 0.7; filter: drop-shadow(0 0 2px var(--cyan)); }
-.controls-hint { position: absolute; left: 50%; bottom: 27px; transform: translateX(-50%); color: rgba(191, 211, 212, 0.5); font-size: 7px; letter-spacing: 0.07em; pointer-events: none; white-space: nowrap; }
+.desktop-extract { min-width: 150px; min-height: 44px; position: absolute; z-index: 14; left: 50%; bottom: 24px; padding: 8px 18px; transform: translateX(-50%); border: 1px solid var(--green); background: rgba(4, 13, 15, 0.78); color: var(--green); font-family: var(--display); font-size: 11px; letter-spacing: 0.12em; cursor: pointer; }
+.desktop-extract:hover { background: rgba(20, 68, 53, 0.78); box-shadow: 0 0 20px rgba(98, 255, 182, 0.1) inset; }
+.controls-hint { position: absolute; left: 50%; bottom: 82px; transform: translateX(-50%); color: rgba(191, 211, 212, 0.5); font-size: 7px; letter-spacing: 0.07em; pointer-events: none; white-space: nowrap; }
 .controls-hint kbd { padding: 3px 5px; border: 1px solid rgba(191, 211, 212, 0.25); background: rgba(0, 0, 0, 0.25); color: rgba(228, 241, 240, 0.75); font-family: var(--mono); font-size: 7px; }
 .touch-stick { width: 82px; height: 82px; position: absolute; z-index: 12; display: grid; place-items: center; border: 1px solid rgba(92, 231, 255, 0.48); border-radius: 50%; background: rgba(3, 14, 17, 0.38); box-shadow: 0 0 26px rgba(92, 231, 255, 0.08) inset; opacity: 0; transform: translate(-50%, -50%); transition: opacity 100ms ease; pointer-events: none; }
 .touch-stick[data-active="true"] { opacity: 1; }
@@ -380,6 +382,7 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
   .ammo-panel > strong small { font-size: 12px; }
   .ammo-panel > em { align-self: end; font-size: 5px; }
   .combat-message { top: 154px; width: 74vw; text-align: center; }
+  .desktop-extract { display: none; }
   .controls-hint { display: none; }
   .touch-controls { display: flex; align-items: stretch; }
   .touch-actions { width: 100%; grid-template-columns: minmax(0, 1fr) 72px; grid-template-rows: repeat(2, 1fr); gap: 4px; }
