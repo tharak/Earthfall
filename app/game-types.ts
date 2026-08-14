@@ -3,12 +3,35 @@ import type * as THREE from "three";
 export type WeaponId = "arc" | "pulse";
 export type SkinId = "carbon" | "salvage" | "signal";
 export type EnemyKind = "hunter" | "sentry";
+export type MissionMapId = "sao-paulo" | "tokyo";
+export type MissionStatus = "PLAYABLE" | "SCANNING";
+export type WorldPoint = { x: number; z: number };
+export type MapPoint = [number, number];
+
+export type MissionDefinition = {
+  id: string;
+  mapId: MissionMapId | null;
+  city: string;
+  country: string;
+  zone: string;
+  coordinates: string;
+  threat: string;
+  status: MissionStatus;
+  reward: string;
+  enemies: string;
+  enemyTypes: EnemyKind[];
+  latitude: number;
+  longitude: number;
+};
+
+export type TacticalMapPlayer = WorldPoint & { heading: number };
+export type TacticalMapEnemy = WorldPoint & { id: number; kind: EnemyKind };
 
 export type TacticalMapState = {
-  player: { x: number; z: number; heading: number };
-  enemies: Array<{ id: number; x: number; z: number; kind: EnemyKind }>;
-  pickups: Array<{ x: number; z: number }>;
-  extractions: Array<{ x: number; z: number }>;
+  player: TacticalMapPlayer;
+  enemies: TacticalMapEnemy[];
+  pickups: WorldPoint[];
+  extractions: WorldPoint[];
 };
 
 export type MissionHud = {
@@ -106,3 +129,17 @@ export type BoxObstacle = {
   minZ: number;
   maxZ: number;
 };
+
+export type PlayerEntity = {
+  group: THREE.Group;
+  body: THREE.Mesh;
+  accent: THREE.Mesh;
+};
+
+export type MissionEnvironment = {
+  mapObstacles: Array<BoxObstacle & { points: MapPoint[] }>;
+  obstacles: BoxObstacle[];
+};
+
+export type MissionHudListener = (hud: MissionHud) => void;
+export type MissionEndListener = (result: MissionResult) => void;
