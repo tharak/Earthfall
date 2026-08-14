@@ -245,6 +245,7 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .health-track i { height: 100%; display: block; background: var(--cyan); box-shadow: 0 0 12px rgba(92, 231, 255, 0.52); transition: width 120ms linear; }
 .combat-message { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); padding: 8px 22px; border-top: 1px solid rgba(92, 231, 255, 0.36); border-bottom: 1px solid rgba(92, 231, 255, 0.36); background: rgba(6, 18, 20, 0.55); color: var(--cyan); font-family: var(--display); font-size: 13px; letter-spacing: 0.16em; opacity: 0; transition: opacity 150ms ease; pointer-events: none; }
 .combat-message[data-visible="true"] { opacity: 1; }
+.bottom-hud { display: contents; }
 .health-panel { width: 220px; left: 24px; bottom: 28px; }
 .health-copy { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 7px; }
 .health-copy span,
@@ -365,20 +366,48 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
   .mini-map header,
   .mini-map footer { font-size: 5px; }
   .map-attribution { display: none; }
-  .health-panel,
-  .ammo-panel { bottom: 130px; }
-  .health-panel { width: 158px; left: 12px; }
-  .ammo-panel { width: 154px; right: 12px; }
+  .bottom-hud { position: absolute; z-index: 14; left: 8px; right: 8px; bottom: 8px; display: grid; grid-template-columns: minmax(80px, 0.8fr) minmax(84px, 0.85fr) minmax(144px, 1.45fr); gap: 6px; align-items: stretch; }
+  .bottom-hud .health-panel,
+  .bottom-hud .ammo-panel,
+  .bottom-hud .touch-controls { width: auto; height: 84px; min-width: 0; position: relative; inset: auto; }
+  .bottom-hud .health-panel,
+  .bottom-hud .ammo-panel { padding: 8px; }
+  .health-copy { margin-bottom: 9px; }
+  .health-copy span { font-size: 6px; }
+  .health-copy strong { font-size: 20px; }
+  .ammo-panel > span { overflow: hidden; font-size: 6px; text-overflow: ellipsis; white-space: nowrap; }
+  .ammo-panel > strong { font-size: 32px; }
+  .ammo-panel > strong small { font-size: 12px; }
+  .ammo-panel > em { align-self: end; font-size: 5px; }
   .combat-message { top: 154px; width: 74vw; text-align: center; }
   .controls-hint { display: none; }
-  .touch-controls { display: flex; }
+  .touch-controls { display: flex; align-items: stretch; }
+  .touch-actions { width: 100%; grid-template-columns: minmax(0, 1fr) 72px; grid-template-rows: repeat(2, 1fr); gap: 4px; }
+  .touch-actions button { min-width: 0; min-height: 0; padding: 4px; }
+  .touch-actions .fire { width: 72px; height: 72px; align-self: center; }
   .debrief-card { padding: 28px 18px; }
   .debrief-stats { grid-template-columns: 1fr; }
   .debrief-stats div { min-height: 62px; border-right: 0; border-bottom: 1px solid var(--line); }
 }
 
 @media (pointer: coarse) {
-  .touch-controls { display: flex; }
+  .bottom-hud { position: absolute; z-index: 14; left: 8px; right: 8px; bottom: 8px; display: grid; grid-template-columns: minmax(80px, 0.8fr) minmax(84px, 0.85fr) minmax(144px, 1.45fr); gap: 6px; align-items: stretch; }
+  .bottom-hud .health-panel,
+  .bottom-hud .ammo-panel,
+  .bottom-hud .touch-controls { width: auto; height: 84px; min-width: 0; position: relative; inset: auto; }
+  .bottom-hud .health-panel,
+  .bottom-hud .ammo-panel { padding: 8px; }
+  .health-copy { margin-bottom: 9px; }
+  .health-copy span { font-size: 6px; }
+  .health-copy strong { font-size: 20px; }
+  .ammo-panel > span { overflow: hidden; font-size: 6px; text-overflow: ellipsis; white-space: nowrap; }
+  .ammo-panel > strong { font-size: 32px; }
+  .ammo-panel > strong small { font-size: 12px; }
+  .ammo-panel > em { align-self: end; font-size: 5px; }
+  .touch-controls { display: flex; align-items: stretch; }
+  .touch-actions { width: 100%; grid-template-columns: minmax(0, 1fr) 72px; grid-template-rows: repeat(2, 1fr); gap: 4px; }
+  .touch-actions button { min-width: 0; min-height: 0; padding: 4px; }
+  .touch-actions .fire { width: 72px; height: 72px; align-self: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {

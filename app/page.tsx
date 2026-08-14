@@ -255,16 +255,26 @@ function MissionStage({
 
       <div className="combat-message" data-visible={Boolean(hud.message)}>{hud.message || "SYSTEM NOMINAL"}</div>
 
-      <aside className="health-panel">
-        <div className="health-copy"><span>VITALS</span><strong>{hud.health}</strong></div>
-        <div className="health-track"><i style={{ width: `${hud.health}%` }} /></div>
-      </aside>
+      <div className="bottom-hud">
+        <aside className="health-panel">
+          <div className="health-copy"><span>VITALS</span><strong>{hud.health}</strong></div>
+          <div className="health-track"><i style={{ width: `${hud.health}%` }} /></div>
+        </aside>
 
-      <aside className="ammo-panel">
-        <span>{WEAPONS.find((item) => item.id === weapon)?.name}</span>
-        <strong>{hud.reloading ? "--" : hud.ammo}<small> / {hud.magazine}</small></strong>
-        <em>{hud.reloading ? "RELOADING" : "R · RELOAD"}</em>
-      </aside>
+        <aside className="ammo-panel">
+          <span>{WEAPONS.find((item) => item.id === weapon)?.name}</span>
+          <strong>{hud.reloading ? "--" : hud.ammo}<small> / {hud.magazine}</small></strong>
+          <em>{hud.reloading ? "RELOADING" : "R · RELOAD"}</em>
+        </aside>
+
+        <div className="touch-controls" aria-label="Touch controls">
+          <div className="touch-actions">
+            <button onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("reload", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("reload", false); }} onPointerCancel={() => setTouch("reload", false)}>RELOAD</button>
+            {hud.extractionUnlocked && <button className="extract" onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("extract", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("extract", false); }} onPointerCancel={() => setTouch("extract", false)}>EXTRACT</button>}
+            <button className="fire" onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("fire", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("fire", false); }} onPointerCancel={() => setTouch("fire", false)}>FIRE</button>
+          </div>
+        </div>
+      </div>
 
       <aside className="salvage-panel">
         <span>UNSECURED</span>
@@ -284,13 +294,6 @@ function MissionStage({
         <i style={{ transform: `translate(${stick.dx}px, ${stick.dy}px)` }} />
       </div>
 
-      <div className="touch-controls" aria-label="Touch controls">
-        <div className="touch-actions">
-          <button onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("reload", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("reload", false); }} onPointerCancel={() => setTouch("reload", false)}>RELOAD</button>
-          {hud.extractionUnlocked && <button className="extract" onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("extract", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("extract", false); }} onPointerCancel={() => setTouch("extract", false)}>EXTRACT</button>}
-          <button className="fire" onPointerDown={(event) => { event.stopPropagation(); capturePointer(event.currentTarget, event.pointerId); setTouch("fire", true); }} onPointerUp={(event) => { event.stopPropagation(); setTouch("fire", false); }} onPointerCancel={() => setTouch("fire", false)}>FIRE</button>
-        </div>
-      </div>
     </main>
   );
 }
