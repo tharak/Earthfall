@@ -155,6 +155,9 @@ function MissionStage({
     down: false,
     left: false,
     right: false,
+    aimX: 0,
+    aimZ: 0,
+    aimWithStick: false,
     fire: false,
     reload: false,
     extract: false,
@@ -209,6 +212,8 @@ function MissionStage({
     touchRef.current.right = dx > threshold;
     touchRef.current.up = dy < -threshold;
     touchRef.current.down = dy > threshold;
+    touchRef.current.aimX = dx;
+    touchRef.current.aimZ = dy;
     setStick({ active: true, x: origin.x, y: origin.y, dx, dy });
   };
 
@@ -225,6 +230,7 @@ function MissionStage({
   const onTouchStart = (event: ReactPointerEvent<HTMLElement>): void => {
     if (event.pointerType === "mouse" || (event.target as HTMLElement).closest("button, a")) return;
     if (stickPointerRef.current.id !== null) return;
+    touchRef.current.aimWithStick = true;
     stickPointerRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
     capturePointer(event.currentTarget, event.pointerId);
     setStick({ active: true, x: event.clientX, y: event.clientY, dx: 0, dy: 0 });
@@ -281,7 +287,7 @@ function MissionStage({
         MAP DATA © OPENSTREETMAP CONTRIBUTORS · ODBL
       </a>
 
-      <div className="controls-hint"><kbd>WASD</kbd> MOVE / AIM <kbd>LMB</kbd> FIRE <kbd>RMB</kbd> CAMERA <kbd>R</kbd> RELOAD</div>
+      <div className="controls-hint"><kbd>WASD</kbd> MOVE <kbd>MOUSE</kbd> AIM <kbd>LMB</kbd> FIRE <kbd>RMB</kbd> CAMERA <kbd>R</kbd> RELOAD</div>
 
       <div className="touch-stick" data-active={stick.active} style={{ left: stick.x, top: stick.y }} aria-hidden="true">
         <i style={{ transform: `translate(${stick.dx}px, ${stick.dy}px)` }} />

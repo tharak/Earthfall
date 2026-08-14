@@ -75,6 +75,8 @@ export class GameEngine {
   private readonly player: THREE.Group;
   private readonly playerBody: THREE.Mesh;
   private readonly playerAccent: THREE.Mesh;
+  private readonly raycaster = new THREE.Raycaster();
+  private readonly aimPoint = new THREE.Vector3();
   private readonly cameraController: OrbitCameraController;
   private readonly input: GameInput;
   private readonly enemies: EnemyEntity[] = [];
@@ -137,7 +139,7 @@ export class GameEngine {
     this.scene.background = new THREE.Color(0xaed6e5);
     this.scene.fog = new THREE.FogExp2(0xc1dce3, 0.008);
     this.cameraController = new OrbitCameraController(this.camera, this.canvas);
-    this.input = new GameInput(this.canvas, this.cameraController, () => this.startReload());
+    this.input = new GameInput(this.canvas, this.cameraController, this.touch, () => this.startReload());
     window.addEventListener("resize", this.resize);
 
     const player = createPlayer(skinId);
@@ -241,6 +243,7 @@ export class GameEngine {
     this.completeReloadIfReady(wasReloading);
 
     if (this.touch.reload) this.startReload();
+    this.updateAim();
     this.updatePlayer(dt);
     this.updateEnemies(dt);
     this.updatePickups(dt);
@@ -289,6 +292,23 @@ export class GameEngine {
     else if (this.timeLeft <= 0) this.finish(false, "timeout");
   }
 
+  private updateAim(): void {
+    if (this.touch.aimWithStick) {
+      if (this.touch.aimX !== 0 || this.touch.aimZ !== 0) {
+        this.player.rotation.y = Math.atan2(-this.touch.aimX, -this.touch.aimZ);
+      }
+      return;
+    }
+
+    this.raycaster.setFromCamera(this.input.pointer, this.camera);
+    const ray = this.raycaster.ray;
+    const distance = -ray.origin.y / ray.direction.y;
+    if (distance > 0) this.aimPoint.copy(ray.origin).addScaledVector(ray.direction, distance);
+    const dx = this.aimPoint.x - this.player.position.x;
+    const dz = this.aimPoint.z - this.player.position.z;
+    if (Math.abs(dx) + Math.abs(dz) > 0.01) this.player.rotation.y = Math.atan2(-dx, -dz);
+  }
+
   private updatePlayer(dt: number): void {
     const move = new THREE.Vector3();
     if (this.input.isPressed("KeyW") || this.input.isPressed("ArrowUp") || this.touch.up) move.z -= 1;
@@ -297,7 +317,6 @@ export class GameEngine {
     if (this.input.isPressed("KeyD") || this.input.isPressed("ArrowRight") || this.touch.right) move.x += 1;
     if (move.lengthSq() > 0) {
       move.normalize();
-      this.player.rotation.y = Math.atan2(-move.x, -move.z);
       const previous = this.player.position.clone();
       this.player.position.addScaledVector(move, PLAYER_MOVE_SPEED * dt);
       this.player.position.x = THREE.MathUtils.clamp(this.player.position.x, -MISSION_RADIUS_METERS, MISSION_RADIUS_METERS);

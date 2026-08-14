@@ -107,6 +107,9 @@ export type TouchInput = {
   down: boolean;
   left: boolean;
   right: boolean;
+  aimX: number;
+  aimZ: number;
+  aimWithStick: boolean;
   fire: boolean;
   reload: boolean;
   extract: boolean;

@@ -113,8 +113,8 @@ Show robots destroyed, unsecured salvage collected, extraction result, credits b
 
 | Action | Desktop | Touch prototype |
 | --- | --- | --- |
-| Move | WASD or arrow keys | Direction pad |
-| Aim | Mouse position on ground | Automatic nearest-target aim |
+| Move | WASD or arrow keys | Floating movement stick |
+| Aim | Mouse position on ground | Movement stick direction |
 | Fire | Hold/click left mouse | Hold FIRE |
 | Reload | R | RELOAD button |
 | Extract | Hold E in extraction field | Hold EXTRACT |
